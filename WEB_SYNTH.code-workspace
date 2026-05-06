@@ -5,6 +5,9 @@
 		},
 		{
 			"path": "."
+		},
+		{
+			"path": "../../PROJECTS/RECLUSE_WEBSITE"
 		}
 	],
 	"settings": {
