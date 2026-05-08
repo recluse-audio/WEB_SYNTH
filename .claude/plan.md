@@ -138,16 +138,19 @@ emcc sine.cpp -O3 \
 
 ---
 
-## Increment 4 — Static server + HTML scaffold  `[ ]`
+## Increment 4 — Static server + HTML scaffold  `[x]`
 
-**What:**
-- `PUBLIC/index.html` — single "Start" button, `<script type="module" src="main.js">`.
-- `PUBLIC/main.js` — stub: on click, create `AudioContext`, log `state`.
-- Static server: `npx serve PUBLIC` (no install) or `python -m http.server -d PUBLIC 8080`.
+**Done 2026-05-08.** Smoke test passed: button click → console logged `AudioContext state: running sampleRate: 44100`.
+
+- `PUBLIC/index.html` — single "Start" button + `<script type="module" src="main.js">`.
+- `PUBLIC/main.js` — click handler: `new AudioContext()`, `await ctx.resume()`, log `state` + `sampleRate`.
+- `SCRIPTS/serve.py` — wraps `http.server.SimpleHTTPRequestHandler` rooted at `PUBLIC/`. Default port 8080. Override `--port N`.
+
+**Run:** `python SCRIPTS/serve.py` → open `http://localhost:8080`.
 
 **Why:** Browsers block `AudioContext` until user gesture (autoplay policy). `file://` URLs cannot load AudioWorklet modules — must be served over HTTP/HTTPS.
 
-**Test:** Open `http://localhost:<port>`. Click button. DevTools console shows `state: "running"`.
+**Test:** Open `http://localhost:8080`. Click button. DevTools console shows `state: "running"` and the device's `sampleRate` (typically 44100 or 48000).
 
 ---
 
