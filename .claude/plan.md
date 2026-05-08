@@ -28,6 +28,13 @@ After every increment, this file is updated: status flipped, notes appended unde
 - 2026-05-07: Build invokes `python emcc.py` directly (not `emcc.bat`, not via `emsdk_env.sh`). Cleaner — no PATH mutation, no cmd.exe shim. Build script captures EMSDK_DIR + EMSDK_PYTHON as overridable env vars.
 - 2026-05-07: Migrated build to CMake + Ninja. See Inc 1 notes.
 - 2026-05-07: **Architecture pivot — DSP moves to RD_DSP repo.** WEB_SYNTH becomes web-glue + wasm shim layer; pure C++ DSP lives in standalone `RD_DSP` library, also consumed natively by JUCE plugins. WEB_SYNTH consumes RD_DSP via git submodule at `SUBMODULES/RD_DSP/`. Inc 2 reframed: no native test in WEB_SYNTH (DSP tests live in RD_DSP via Catch2 + JUCE harness). Integration contract + step-by-step wiring plan: see `.claude/rd_dsp_integration_plan.md`.
+- 2026-05-08: **Inc 2 complete.** C++/wasm side ready for Inc 4 onward. Build: `python SCRIPTS/build_synth.py [--clean]`. Artifact: `PUBLIC/synth.wasm` (~13.6 KB). Six exports the JS side will call:
+  - `synth_prepare(double sr)` — one-time init.
+  - `synth_set_freq(float hz)` — parameter setter.
+  - `synth_start()` / `synth_stop()` — run-state gate. Default = stopped (silence).
+  - `synth_process()` — block-rate hot path; fills the internal output buffer.
+  - `synth_get_output_buf() -> float*` — pointer into wasm linear memory; JS wraps with `Float32Array(memory.buffer, ptr, 128)` for zero-copy reads.
+  Block size hardcoded to **128 samples** = AudioWorklet's W3C-spec render quantum. RD_DSP linked clean (no WASI imports; `BufferFiller`'s CSV path dead-stripped).
 
 ---
 
@@ -110,45 +117,18 @@ emcc sine.cpp -O3 \
 
 ## Increment 2 — Wire RD_DSP submodule + paired `SynthProcessor` (C++ + JS)  `[x]`
 
-**Done 2026-05-08.** C++ side complete; JS side (worklet pairing) is Inc 5. Decomposed into 7 sub-steps tracked in `.claude/rd_dsp_integration_plan.md` (all `[x]`). Final wasm shape: `PUBLIC/synth.wasm` (~13.6 KB) exporting `synth_prepare(sr)`, `synth_set_freq(hz)`, `synth_start()`, `synth_stop()`, `synth_process()`, `synth_get_output_buf()`. Internal 128-sample static buffer for zero-copy JS access via `Float32Array` view. RD_DSP linked clean — no WASI imports, BufferFiller's CSV path dead-stripped.
+**Done 2026-05-08.** C++ side complete; JS pairing happens in Inc 5–8. Decomposed into 7 sub-steps fully tracked in `.claude/rd_dsp_integration_plan.md` (all `[x]`).
 
-**Architecture:** DSP code lives in standalone `RD_DSP` repo. WEB_SYNTH consumes via git submodule. `ENGINE/<MODULE>/` holds a C++ processor class owning `rd_dsp::` instances as members; matching JS `AudioWorkletProcessor` lives in `PUBLIC/`. Same conceptual name on both sides. See `.claude/rd_dsp_integration_plan.md` for the full contract + incremental wiring steps.
+**Architecture:** DSP code lives in standalone `RD_DSP` repo. WEB_SYNTH consumes via git submodule at `SUBMODULES/RD_DSP/`. `ENGINE/<MODULE>/` holds a C++ processor class owning `rd_dsp::` instances as members; matching JS `AudioWorkletProcessor` lives in `PUBLIC/`. Same conceptual name on both sides. Real Oscillator API is **block-rate** via `process(RD_Buffer&)` — per-sample is achievable but suboptimal.
 
-**What:**
-1. RD_DSP must expose `rd_dsp::Oscillator` (header + source) per integration doc § 3.
-   - Per-sample API: `init(float sr)`, `setWaveform(Waveform)`, `setFreq(float)`, `reset()`, `getNextSample()`.
-   - Class with state (`mPhase`, `mPhaseInc`, `mSr`, `mWaveform`), `m`-prefix members.
-   - `enum class Waveform { Sine, Saw, Square, Triangle }` in same header.
-   - For Inc 2 only Sine path needs to actually generate; other waveforms can return 0.
-   - `#pragma once`, namespace `rd_dsp`, no JUCE / threads / filesystem.
-2. Rename WEB_SYNTH module: `ENGINE/SINE/` → `ENGINE/SYNTH/`. The wasm artifact becomes `synth.wasm`. (SINE was the stub-era name; once the C++ class is `SynthProcessor` and the JS is `synth-worklet.js`, "SYNTH" matches.)
-3. Add submodule to WEB_SYNTH: `git submodule add ../RD_DSP SUBMODULES/RD_DSP`.
-4. Update WEB_SYNTH root `CMakeLists.txt`:
-   ```cmake
-   set(BUILD_TESTS      OFF CACHE BOOL "" FORCE)
-   set(BUILD_STANDALONE OFF CACHE BOOL "" FORCE)
-   add_subdirectory(SUBMODULES/RD_DSP)
-   add_subdirectory(ENGINE/SYNTH)
-   ```
-5. Rewrite `ENGINE/SYNTH/synth_processor.cpp` per integration doc § 5:
-   - C++ class `SynthProcessor` with `rd_dsp::Oscillator mOscillator` member.
-   - Methods: `prepare`, `setWaveform`, `setFreq`, `reset`, `process(float*, int)`.
-   - File-scope `static SynthProcessor gSynth` for POC single-instance.
-   - `extern "C"` shims: `prepare`, `set_waveform`, `set_freq`, `reset`, `process`.
-6. Update `ENGINE/SYNTH/CMakeLists.txt`:
-   - `target_link_libraries(synth PRIVATE RD_DSP)`.
-   - `EXPORTED_FUNCTIONS=[_prepare,_set_waveform,_set_freq,_reset,_process]`.
-   - Post-build copies to `PUBLIC/synth.wasm`.
-7. Rename build script: `SCRIPTS/build_sine.py` → `SCRIPTS/build_synth.py`.
-8. Run `python SCRIPTS/regenSource.py` → emits `CMAKE/SYNTH_SOURCES.cmake`.
+**Final shape:** see top-of-file running notes for the 6-symbol export list + buffer convention. Source: `ENGINE/SYNTH/synth.cpp`, `ENGINE/SYNTH/CMakeLists.txt`. Build: `python SCRIPTS/build_synth.py [--clean]` (auto-runs `regenSource.py` first).
 
-**Why:** Decouples DSP correctness from web plumbing. RD_DSP's tests (Catch2 + JUCE harness) verify sine math offline; WEB_SYNTH only proves the wasm shim + AudioWorklet wiring.
+**Sub-step decisions worth carrying forward** (full detail in integration plan):
+- Adapter pattern: `SynthProcessor` owns an `RD_Buffer mWorkspace`; per block it calls `Oscillator::process(mWorkspace)` then copies channel 0 into the static `gOutBuf[128]`. One memcpy per block — negligible.
+- `Oscillator::reset()` not added (skipped — `start`/`stop` gate is enough for POC).
+- Internal output buffer (C++ owns) chosen over external (`_malloc`-based) — simpler JS, no `_malloc`/`_free` exports needed.
 
-**Test:**
-- DSP correctness: `cd RD_DSP; <build + run Tests>` (Catch2 unit tests pass for `Oscillator` Sine path).
-- Integration: `python SCRIPTS/build_synth.py --clean` produces `PUBLIC/synth.wasm` with `prepare`, `set_waveform`, `set_freq`, `reset`, `process` exports. `add` symbol gone. No Catch2 fetched during wasm build.
-
-**JUCE analogue:** RD_DSP plays the role JUCE's `dsp::` namespace does — pure DSP math, framework-agnostic. WEB_SYNTH's shim is the equivalent of a JUCE plugin's `AudioProcessor::processBlock` wrapper that adapts the host's buffer format.
+**JUCE analogue:** RD_DSP plays the role JUCE's `dsp::` namespace does — pure DSP math, framework-agnostic. WEB_SYNTH's shim ≈ a JUCE plugin's `AudioProcessor::processBlock` wrapper adapting the host's buffer format.
 
 ---
 
@@ -174,53 +154,73 @@ emcc sine.cpp -O3 \
 ## Increment 5 — AudioWorklet skeleton (silent)  `[ ]`
 
 **What:**
-- `PUBLIC/sine-worklet.js` — `class SineProcessor extends AudioWorkletProcessor`. `process(inputs, outputs, params)` writes zeros. `registerProcessor('sine', SineProcessor)`.
-- `main.js` — `await ctx.audioWorklet.addModule('sine-worklet.js')`, `new AudioWorkletNode(ctx, 'sine')`, connect to `ctx.destination`.
+- `PUBLIC/synth-worklet.js` — `class SynthProcessor extends AudioWorkletProcessor`. `process(inputs, outputs, params)` writes zeros to `outputs[0][0]` and returns `true`. Bottom of file: `registerProcessor('synth', SynthProcessor)`.
+- `main.js` — `await ctx.audioWorklet.addModule('synth-worklet.js')`, `new AudioWorkletNode(ctx, 'synth')`, connect to `ctx.destination`.
 
-**Why:** Decouple audio-thread plumbing from wasm loading. If silence works, worklet wired correctly.
+**Why:** Decouple audio-thread plumbing from wasm loading. If silence renders without errors, the worklet is wired correctly. C++/wasm side stays out of the picture this increment.
 
-**Test:** Click Start. No console errors. `console.log` once on first `process` call (logs from worklet appear in main devtools).
+**Concept primer (worth knowing before writing code):**
+- The worklet `process()` runs on a dedicated **audio thread**, not the main thread. No DOM access. No `console.log` reliability quirks (logs do appear in DevTools, just from a different scope). No `setTimeout`. No `fetch`.
+- `process(inputs, outputs, params)` is called every render quantum (128 samples). Return `true` to keep the node alive; `false` shuts it down.
+- The C++ class on our side is also called `SynthProcessor`. Deliberate pairing — C++ side already exists (`ENGINE/SYNTH/synth.cpp`); JS side is what this increment creates.
+
+**Test:** Click Start. No console errors. Add a `console.log("worklet alive")` once on first `process` call (gate with a flag) to confirm scheduling.
 
 ---
 
 ## Increment 6 — Load wasm inside worklet  `[ ]`
 
 **What:**
-- Main thread fetches `sine.wasm` as `ArrayBuffer`, posts to worklet via `node.port.postMessage({ wasm })`.
-- Worklet `port.onmessage`: `WebAssembly.instantiate(wasm, imports)`, store `exports`, call `init(sampleRate)`.
-- `process()` still writes zeros.
+- Main thread (`main.js`): `fetch('synth.wasm') -> arrayBuffer()`, then `node.port.postMessage({ type: 'wasm', bytes })`.
+- Worklet (`synth-worklet.js`): `this.port.onmessage = e => { ... }`. On `'wasm'` message: `WebAssembly.instantiate(bytes, imports)`. Store `instance.exports`. Call `exports.synth_prepare(sampleRate)` once.
+- `process()` still writes zeros — wasm loaded but not yet driving audio.
 
-**Imports object:** standalone wasm from emcc with no libc usage needs nothing. If `<cmath>` pulls in any imports (rare with `STANDALONE_WASM`), provide `env.emscripten_*` stubs as needed — discovered empirically.
+**Why AudioWorklets can't `fetch` themselves:** No `window`, no `self.fetch`. Main thread does the network work, ships the bytes via `MessagePort` (the bidirectional message channel between main thread and worklet, accessible as `node.port` on main side and `this.port` inside the worklet). Standard pattern for any worklet that needs file data.
 
-**Why:** AudioWorklets cannot use `fetch` (no `window`). Main thread fetches, ships bytes via `MessagePort`. Standard pattern.
+**Imports object** — second arg to `WebAssembly.instantiate`. Standalone wasm from emcc with `--no-entry` typically needs nothing; pass `{}` and see if it errors. If something like `env.emscripten_*` is missing, provide stubs as the error names them.
 
-**Test:** Console log `"wasm loaded, exports: [init, set_freq, process, memory, ...]"`. No audio change yet.
+**Test:** Console log the keys of `exports` after instantiate — should include all six `synth_*` symbols plus `memory`. No audio change yet.
 
 ---
 
 ## Increment 7 — Drive samples from wasm  `[ ]`
 
-**What:**
-- In C++, declare a static buffer `float g_buf[128];` with an exported getter `extern "C" float* get_buf() { return g_buf; }`.
-- Worklet on init: `bufPtr = exports.get_buf()`, then construct `view = new Float32Array(exports.memory.buffer, bufPtr, 128)`.
-- Each `process()`: call `exports.process(bufPtr, 128)`, copy `view` into `outputs[0][0]`.
+**C++ side already done.** The wasm exports `synth_get_output_buf()` returning a pointer to the internal 128-float `gOutBuf`, and `synth_process()` fills it. This increment is JS-only.
 
-**Why:** Hot path. 128-sample blocks at 48 kHz = ~2.7 ms. No allocation, no message-passing per block. `Float32Array` view is a zero-copy peek into wasm linear memory.
+**What (JS):**
+- After `synth_prepare(sampleRate)` in Inc 6, also call:
+  ```js
+  this.bufPtr = this.exports.synth_get_output_buf();
+  this.view   = new Float32Array(this.exports.memory.buffer, this.bufPtr, 128);
+  this.exports.synth_start();   // gate the run-state on
+  ```
+- In `process(inputs, outputs, params)`:
+  ```js
+  this.exports.synth_process();
+  outputs[0][0].set(this.view);
+  return true;
+  ```
 
-**Test:** Click Start → continuous tone audible. C++ default 440 Hz. Confirm by ear.
+**Why this is zero-copy:** `Float32Array(memory.buffer, ptr, 128)` is a *view*, not a new allocation. JS is reading the same bytes the wasm just wrote — no memcpy across the language boundary. `outputs[0][0].set(view)` does memcpy *within JS* into the worklet's actual output, which is unavoidable.
+
+**Why explicit `synth_start()`:** the C++ `Oscillator` defaults to stopped (`mIsRunning = false`). Without `synth_start()` the buffer stays zeroed every block. Hooking `synth_start()` to the page's "Start" button (matching browser autoplay policy) is one option; calling it once at init is simpler for now.
+
+**Render-quantum math:** 128 samples at 48 kHz = ~2.67 ms per block. Worklet calls `process()` ~375× per second.
+
+**Test:** Click Start → continuous 440 Hz tone audible (Oscillator's default freq via `_calculatePhaseIncrement`). Confirm by ear.
 
 ---
 
 ## Increment 8 — Frequency control from UI  `[ ]`
 
 **What:**
-- HTML `<input type="range" min="50" max="2000" value="440">`.
-- On `input`: `node.port.postMessage({ type: 'freq', value: hz })`.
-- Worklet `port.onmessage` calls `exports.set_freq(hz)`.
+- HTML: `<input type="range" min="50" max="2000" value="440" id="freq">`.
+- `main.js`: `freq.addEventListener('input', e => node.port.postMessage({ type: 'freq', value: +e.target.value }))`.
+- Worklet `port.onmessage`: on `'freq'` message → `this.exports.synth_set_freq(msg.value)`.
 
-**Why:** Bidirectional control plane works. Slider → main → port → worklet → wasm.
+**Why bidirectional `MessagePort`:** UI events fire on the main thread. Audio-thread state (the wasm `Oscillator`) lives in the worklet. The port is the only path between them. Sending a message is fire-and-forget; no return value, no blocking.
 
-**Test:** Drag slider, pitch tracks smoothly. No clicks (phase accumulator persists across blocks).
+**Test:** Drag slider, pitch tracks smoothly. No audible clicks at boundaries — `Oscillator`'s phase accumulator persists across `setFreq` calls (it just updates `mPhaseIncrement` on the next sample).
 
 ---
 
@@ -252,8 +252,6 @@ Punch list once sine audible end-to-end:
 
 ## Open questions to resolve as we go
 
-- Build runner: bash script vs. CMake/Emscripten-CMake? Default to `build.sh` until friction.
-- emsdk PATH scoping: build scripts self-source `$EMSDK_DIR/emsdk_env.sh` (default `/c/emsdk`). No global PATH mutation, no `.bashrc` edit, no `--permanent`. Confirmed 2026-05-07.
 - Bundler: keep raw `<script type="module">` or introduce Vite when complexity grows? Default raw until it hurts.
-- `ENGINE/` lives top-level of WEB_SYNTH repo. Confirmed.
-- Naming: ALL CAPS for top-level dirs (`ENGINE/`, `PUBLIC/`). Confirmed 2026-05-06.
+- TypeScript: stay in plain JS for POC; revisit if file count or complexity demands.
+- Static server choice for Inc 4: `python -m http.server -d PUBLIC 8080` (zero deps, fine for local dev) vs. `npx serve PUBLIC` (richer dev features, needs Node). Default to Python until friction.
