@@ -1,15 +1,15 @@
 #!/usr/bin/env python
 """
-Build ENGINE/SINE -> sine.wasm via CMake + Emscripten.
+Build ENGINE/SYNTH -> synth.wasm via CMake + Emscripten.
 
-Configures BUILD/SINE/ with `emcmake cmake -G Ninja`, then builds.
-Post-build copy of sine.wasm to PUBLIC/ is handled by CMake itself.
+Configures BUILD/SYNTH/ with `emcmake cmake -G Ninja`, then builds.
+Post-build copy of synth.wasm to PUBLIC/ is handled by CMake itself.
 
 Override paths via env if your install differs:
-    EMSDK_DIR=D:\\tools\\emsdk python SCRIPTS/build_sine.py
+    EMSDK_DIR=D:\\tools\\emsdk python SCRIPTS/build_synth.py
 
 Flags:
-    --clean   wipe BUILD/SINE/ before configuring
+    --clean   wipe BUILD/SYNTH/ before configuring
 """
 
 import argparse
@@ -19,9 +19,13 @@ import subprocess
 import sys
 from pathlib import Path
 
+# Sibling script in SCRIPTS/. Python adds this script's dir to sys.path on launch,
+# so plain import works.
+import regenSource
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SRC_DIR   = REPO_ROOT
-BUILD_DIR = REPO_ROOT / "BUILD" / "SINE"
+BUILD_DIR = REPO_ROOT / "BUILD" / "SYNTH"
 
 EMSDK_DIR = Path(os.environ.get("EMSDK_DIR", r"C:\emsdk"))
 EMCMAKE_PY = EMSDK_DIR / "upstream" / "emscripten" / "emcmake.py"
@@ -32,7 +36,7 @@ NINJA_DIR = Path(os.environ.get("NINJA_DIR",
 
 
 def fail(msg: str) -> None:
-    print(f"build_sine: {msg}", file=sys.stderr)
+    print(f"build_synth: {msg}", file=sys.stderr)
     sys.exit(1)
 
 
@@ -52,7 +56,7 @@ def run(cmd: list[str], env: dict) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--clean", action="store_true",
-                        help="wipe BUILD/SINE/ before configuring")
+                        help="wipe BUILD/SYNTH/ before configuring")
     args = parser.parse_args()
 
     if not EMCMAKE_PY.is_file():
@@ -64,6 +68,11 @@ def main() -> None:
         shutil.rmtree(BUILD_DIR)
 
     BUILD_DIR.mkdir(parents=True, exist_ok=True)
+
+    # Always regenerate per-module source lists before configure so adding/removing
+    # a file under ENGINE/<MODULE>/ doesn't require remembering to run regenSource.py.
+    print("regenerating CMAKE/<MODULE>_SOURCES.cmake")
+    regenSource.main()
 
     env = build_env()
 
@@ -82,7 +91,7 @@ def main() -> None:
     build_cmd = ["cmake", "--build", str(BUILD_DIR)]
     run(build_cmd, env)
 
-    out = REPO_ROOT / "PUBLIC" / "sine.wasm"
+    out = REPO_ROOT / "PUBLIC" / "synth.wasm"
     if out.is_file():
         print(f"built: {out} ({out.stat().st_size} bytes)")
     else:

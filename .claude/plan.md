@@ -27,7 +27,7 @@ After every increment, this file is updated: status flipped, notes appended unde
 - 2026-05-07: Pivoted Rust → Emscripten. Reason: user's existing DSP catalog is JUCE C++; want straight port path.
 - 2026-05-07: Build invokes `python emcc.py` directly (not `emcc.bat`, not via `emsdk_env.sh`). Cleaner — no PATH mutation, no cmd.exe shim. Build script captures EMSDK_DIR + EMSDK_PYTHON as overridable env vars.
 - 2026-05-07: Migrated build to CMake + Ninja. See Inc 1 notes.
-- 2026-05-07: **Architecture pivot — DSP moves to RD_DSP repo.** WEB_SYNTH becomes web-glue + wasm shim layer; pure C++ DSP lives in standalone `RD_DSP` library, also consumed natively by JUCE plugins. WEB_SYNTH consumes RD_DSP via git submodule at `SUBMODULES/RD_DSP/`. Inc 2 reframed: no native test in WEB_SYNTH (DSP tests live in RD_DSP via Catch2 + JUCE harness). Integration contract: see `.claude/rd_dsp_integration.md`.
+- 2026-05-07: **Architecture pivot — DSP moves to RD_DSP repo.** WEB_SYNTH becomes web-glue + wasm shim layer; pure C++ DSP lives in standalone `RD_DSP` library, also consumed natively by JUCE plugins. WEB_SYNTH consumes RD_DSP via git submodule at `SUBMODULES/RD_DSP/`. Inc 2 reframed: no native test in WEB_SYNTH (DSP tests live in RD_DSP via Catch2 + JUCE harness). Integration contract + step-by-step wiring plan: see `.claude/rd_dsp_integration_plan.md`.
 
 ---
 
@@ -108,9 +108,11 @@ emcc sine.cpp -O3 \
 
 ---
 
-## Increment 2 — Wire RD_DSP submodule + paired `SynthProcessor` (C++ + JS)  `[ ]`
+## Increment 2 — Wire RD_DSP submodule + paired `SynthProcessor` (C++ + JS)  `[x]`
 
-**Architecture:** DSP code lives in standalone `RD_DSP` repo. WEB_SYNTH consumes via git submodule. `ENGINE/<MODULE>/` holds a C++ processor class owning `rd_dsp::` instances as members; matching JS `AudioWorkletProcessor` lives in `PUBLIC/`. Same conceptual name on both sides. See `.claude/rd_dsp_integration.md` for the full contract.
+**Done 2026-05-08.** C++ side complete; JS side (worklet pairing) is Inc 5. Decomposed into 7 sub-steps tracked in `.claude/rd_dsp_integration_plan.md` (all `[x]`). Final wasm shape: `PUBLIC/synth.wasm` (~13.6 KB) exporting `synth_prepare(sr)`, `synth_set_freq(hz)`, `synth_start()`, `synth_stop()`, `synth_process()`, `synth_get_output_buf()`. Internal 128-sample static buffer for zero-copy JS access via `Float32Array` view. RD_DSP linked clean — no WASI imports, BufferFiller's CSV path dead-stripped.
+
+**Architecture:** DSP code lives in standalone `RD_DSP` repo. WEB_SYNTH consumes via git submodule. `ENGINE/<MODULE>/` holds a C++ processor class owning `rd_dsp::` instances as members; matching JS `AudioWorkletProcessor` lives in `PUBLIC/`. Same conceptual name on both sides. See `.claude/rd_dsp_integration_plan.md` for the full contract + incremental wiring steps.
 
 **What:**
 1. RD_DSP must expose `rd_dsp::Oscillator` (header + source) per integration doc § 3.

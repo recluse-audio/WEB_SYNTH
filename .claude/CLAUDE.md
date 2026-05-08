@@ -24,7 +24,7 @@ WEB_SYNTH itself is web-glue + C-ABI shim layer: AudioWorklet, HTML, the `extern
 
 For deeper detail, see:
 - `.claude/plan.md` — incremental POC plan with per-step status, notes on what is done vs. pending. Source of truth for "what's next".
-- `.claude/rd_dsp_integration.md` — RD_DSP cross-repo contract: linkage shape, wasm-safety rules for headers, per-sample API conventions.
+- `.claude/rd_dsp_integration_plan.md` — RD_DSP cross-repo contract + incremental wiring plan: linkage shape, wasm-safety rules, block-rate API conventions, step-by-step status.
 
 ## House rules
 
@@ -39,8 +39,8 @@ For deeper detail, see:
 
 ## Commands
 
-- Build the current wasm module: `python SCRIPTS/build_sine.py` from repo root. Add `--clean` to wipe `BUILD/`. Artifact lands at `PUBLIC/sine.wasm`. (Renames to `build_synth.py` / `synth.wasm` per plan Inc 2.)
-- Regenerate source lists after adding or removing a file under `ENGINE/<MODULE>/`: `python SCRIPTS/regenSource.py`. Generated `CMAKE/<MODULE>_SOURCES.cmake` files are committed.
+- Build the current wasm module: `python SCRIPTS/build_synth.py` from repo root. Add `--clean` to wipe `BUILD/`. Artifact lands at `PUBLIC/synth.wasm`.
+- Regenerate source lists after adding or removing a file under `ENGINE/<MODULE>/`: runs automatically as the first step of `build_synth.py`. Standalone invocation: `python SCRIPTS/regenSource.py`. Generated `CMAKE/<MODULE>_SOURCES.cmake` files are committed.
 - No dev server, lint, typecheck, or test commands yet (plan increments 4–8 not started). Document here when added.
 
 **Toolchain:** emsdk at `C:\emsdk` (emcc 5.0.7), Ninja 1.13.2 (`winget install Ninja-build.Ninja`), CMake 3.30.2.
@@ -49,7 +49,7 @@ For deeper detail, see:
 
 ## Working directory layout
 
-- `ENGINE/<MODULE>/` — C++ source for one wasm module (currently `SINE/`; renames to `SYNTH/` per plan Inc 2).
+- `ENGINE/<MODULE>/` — C++ source for one wasm module (currently `SYNTH/`).
 - `SUBMODULES/RD_DSP/` — pure DSP submodule, built into the wasm via `add_subdirectory` + `target_link_libraries`.
 - `CMAKE/<MODULE>_SOURCES.cmake` — generated, committed source lists.
 - `SCRIPTS/` — Python build/dev helpers.

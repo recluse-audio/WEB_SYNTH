@@ -14,7 +14,8 @@
       "Bash(grep -E \"\\\\.\\(bat|sh|py|json\\)$\")",
       "Bash(ninja --version)",
       "Read(//c/emsdk/upstream/emscripten/cmake/Modules/Platform//**)",
-      "Bash(cmake --version)"
+      "Bash(cmake --version)",
+      "Bash(git mv *)"
     ]
   }
 }
