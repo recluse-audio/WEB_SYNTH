@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(rustc --version)",
+      "Bash(rustup --version)",
+      "Bash(rustup target *)",
+      "PowerShell(rustc *)",
+      "Bash(/c/Users/rdeve/.cargo/bin/rustc.exe *)",
+      "Bash(cargo build *)",
+      "Bash(python SCRIPTS/build_sine.py)",
+      "Bash(Get-ChildItem -Path \"C:\\\\REPOS\\\\PLUGIN_PROJECTS\\\\RD\" -Recurse -Force)",
+      "Bash(Select-Object -First 50)",
+      "Bash(Format-List FullName)",
+      "Bash(grep -E \"\\\\.\\(bat|sh|py|json\\)$\")",
+      "Bash(ninja --version)",
+      "Read(//c/emsdk/upstream/emscripten/cmake/Modules/Platform//**)",
+      "Bash(cmake --version)"
+    ]
+  }
+}

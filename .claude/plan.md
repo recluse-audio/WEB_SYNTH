@@ -1,10 +1,12 @@
-# WEB_SYNTH POC Plan — Path 3 (AudioWorklet + Rust→Wasm sine)
+# WEB_SYNTH POC Plan — Path 3b (AudioWorklet + C++→Wasm via Emscripten)
 
-**Goal:** Sine wave from a Rust DSP module, running in an AudioWorkletProcessor, audible in a browser tab. End-to-end shape only.
+**Goal:** Sine wave from a C++ DSP module compiled to wasm, running in an AudioWorkletProcessor, audible in a browser tab. End-to-end shape only.
+
+**Pivot 2026-05-07:** Originally Rust→Wasm. Switched to C++→Wasm/Emscripten so existing JUCE C++ DSP code can be ported forward without rewriting in a new language. Rust↔C++ wasm interop too friction-heavy for a project whose existing IP is C++.
 
 **Integration target:** `C:\REPOS\PROJECTS\RECLUSE_WEBSITE` — static site, plain HTML/JS, Cloudflare worker for auth. Build standalone here; integration is a later increment.
 
-**Audience note:** User is a C++/DSP veteran, zero Rust. Each Rust-touching step gets a short C++/DSP analogue. Web stack gets slightly more hand-holding.
+**Audience note:** User is C++/JUCE/DSP veteran. C++ side gets minimal hand-holding. Web stack (AudioWorklet, MessagePort, browser quirks) gets more.
 
 ---
 
@@ -15,105 +17,153 @@
 - `[x]` done
 - `[!]` blocked / needs user action
 
-After every increment, this file is updated: status flipped, notes appended under the increment, anything learned that affects later steps surfaced near the top.
+After every increment, this file is updated: status flipped, notes appended under the increment, anything learned that affects later steps surfaced near top.
 
 ---
 
 ## Top-of-file running notes
 
-(Empty until first increment lands.)
+- 2026-05-06: Inc 0 (Rust toolchain) was completed before pivot. Now obsolete — superseded by Emscripten install.
+- 2026-05-07: Pivoted Rust → Emscripten. Reason: user's existing DSP catalog is JUCE C++; want straight port path.
+- 2026-05-07: Build invokes `python emcc.py` directly (not `emcc.bat`, not via `emsdk_env.sh`). Cleaner — no PATH mutation, no cmd.exe shim. Build script captures EMSDK_DIR + EMSDK_PYTHON as overridable env vars.
+- 2026-05-07: Migrated build to CMake + Ninja. See Inc 1 notes.
+- 2026-05-07: **Architecture pivot — DSP moves to RD_DSP repo.** WEB_SYNTH becomes web-glue + wasm shim layer; pure C++ DSP lives in standalone `RD_DSP` library, also consumed natively by JUCE plugins. WEB_SYNTH consumes RD_DSP via git submodule at `SUBMODULES/RD_DSP/`. Inc 2 reframed: no native test in WEB_SYNTH (DSP tests live in RD_DSP via Catch2 + JUCE harness). Integration contract: see `.claude/rd_dsp_integration.md`.
 
 ---
 
-## Increment 0 — Toolchain install / verify  `[ ]`
+## Increment 0 — Emscripten install / verify  `[x]`
 
-**What:** Confirm Rust nightly + `wasm32-unknown-unknown` target installed. Install if missing.
+**Done 2026-05-07:** emsdk at `C:\emsdk`, emcc 5.0.7. Two Windows gotchas:
+- `emsdk_env.sh` itself shells to `python` and hits Windows Store stub. Must `export EMSDK_PYTHON=/c/Users/rdeve/AppData/Local/Programs/Python/Python312/python.exe` **before** sourcing.
+- Windows emsdk ships only `emcc.bat`/`.ps1`/`.py` — no bash/no-ext wrapper. Git Bash doesn't auto-resolve `.bat`. Use `emcc.bat` in scripts.
 
-**Why:** Rust compiles to native by default. Need a wasm target so `cargo build --target wasm32-unknown-unknown` produces a `.wasm` file the browser can load.
+**What:** Install Emscripten SDK (emsdk) and confirm `emcc` on PATH.
 
-**Install (only if missing):**
-- `rustup` from https://rustup.rs (user runs interactive install)
-- `rustup default stable` — stable is fine for POC; nightly only needed for SIMD intrinsics later
-- `rustup target add wasm32-unknown-unknown`
+**Why:** Emscripten = LLVM-based C++ → Wasm compiler. Wraps clang. Produces `.wasm` + optional JS glue.
+
+**Install (Windows, Git Bash):**
+```bash
+cd /c/                              # or wherever you keep tools
+git clone https://github.com/emscripten-core/emsdk.git
+cd emsdk
+./emsdk install latest
+./emsdk activate latest
+source ./emsdk_env.sh               # per-shell; or add to .bashrc
+```
 
 **Test:**
-- `rustc --version` → prints version
-- `rustup target list --installed` → includes `wasm32-unknown-unknown`
+- `emcc --version` → prints version
+- `emcc -v` → shows clang target `wasm32-unknown-emscripten`
 
-**C++ analogue:** Like adding an embedded toolchain triple to your compiler — `arm-none-eabi-gcc` for ARM, except here it's `wasm32` for the browser sandbox.
+**JUCE analogue:** Like setting up Projucer's exporter for a new platform — except instead of Xcode/VS, the "platform" is the browser sandbox.
 
 ---
 
-## Increment 1 — Cargo project skeleton  `[ ]`
+## Increment 1 — C++ project skeleton + stub fn  `[x]`
 
-**What:** Create `engine/sine/` Rust crate. `Cargo.toml` declares `crate-type = ["cdylib"]`. `src/lib.rs` with one stub fn `extern "C" fn add(a: f32, b: f32) -> f32`.
+**Done 2026-05-07:** `ENGINE/SINE/sine.cpp` (stub `extern "C" float add(float, float)`).
+
+**Migrated to CMake 2026-05-07:**
+- Root `CMakeLists.txt` (thin: `project(WEB_SYNTH CXX)`, C++20, `add_subdirectory(ENGINE/SINE)`).
+- `ENGINE/SINE/CMakeLists.txt` defines `sine` as `add_executable` with wasm-only flags guarded by `if(EMSCRIPTEN)`. Suffix `.wasm`, `-sSTANDALONE_WASM=1 -sEXPORTED_FUNCTIONS=[_add] --no-entry`. Post-build `add_custom_command` copies to `PUBLIC/sine.wasm`.
+- `CMAKE/SINE_SOURCES.cmake` (generated) — includes `${CMAKE_SOURCE_DIR}/ENGINE/SINE/sine.cpp`. Per-module variable name (`SINE_SOURCES`).
+- `SCRIPTS/regenSource.py` — walks `ENGINE/<MODULE>/`, regenerates per-module `.cmake` source lists. Run by hand on file add/remove. Generated `.cmake` files are committed (contract between filesystem and CMake).
+- `SCRIPTS/build_sine.py` rewritten — invokes `emcmake cmake -G Ninja -B BUILD/SINE` then `cmake --build`. `--clean` flag wipes build dir. Prepends Ninja path (winget package dir) to PATH for cmake subprocess since `winget install` doesn't refresh current shell PATH.
+- `BUILD/` added to root `.gitignore`.
+
+**Toolchain prereq:** Ninja 1.13.2 installed via `winget install Ninja-build.Ninja`. CMake 3.30.2 already present.
+
+**Build:** `python SCRIPTS/build_sine.py` (from repo root). Output `BUILD/SINE/ENGINE/SINE/sine.wasm` → copied to `PUBLIC/sine.wasm` (215 bytes, `add` symbol verified).
+
+**What:** Create `ENGINE/SINE/`. Single `sine.cpp` with stub `extern "C" float add(float a, float b)`. CMake or plain `emcc` — pick plain `emcc` for POC simplicity.
 
 **Why:**
-- `cdylib` = produce a dynamic library (here, a `.wasm` file) instead of a Rust binary.
-- `extern "C"` = C ABI, no Rust name mangling. Browser sees plain function names.
-- Stub fn proves the toolchain end-to-end before any DSP.
-
-**Install:** none (toolchain already covers it).
+- `extern "C"` → no C++ name mangling; browser sees plain symbol `_add`.
+- One source file, one command. CMake comes later if needed.
+- Stub fn proves toolchain end-to-end before touching DSP.
 
 **Files:**
 ```
-engine/sine/Cargo.toml
-engine/sine/src/lib.rs
+ENGINE/SINE/sine.cpp
+ENGINE/SINE/build.sh        (one-liner emcc invocation)
 ```
 
+**emcc flags (POC):**
+```
+emcc sine.cpp -O3 \
+  -s WASM=1 \
+  -s STANDALONE_WASM=1 \
+  -s EXPORTED_FUNCTIONS='["_add"]' \
+  --no-entry \
+  -o sine.wasm
+```
+- `STANDALONE_WASM=1` + `--no-entry` = pure `.wasm`, no JS glue. We'll instantiate manually in worklet (matches how reference repo does raw wasm).
+- `-O3` = release optimization.
+
 **Test:**
-- `cd engine/sine && cargo build --release --target wasm32-unknown-unknown`
-- `target/wasm32-unknown-unknown/release/sine.wasm` exists, non-empty
-- `wasm2wat` (optional) shows exported `add` — skip if not installed
+- `bash build.sh` produces `sine.wasm`, non-empty.
+- `wasm2wat sine.wasm | grep export` shows `add` exported (skip if `wabt` not installed).
 
-**C++ analogue:** `Cargo.toml` ≈ CMakeLists. `cdylib` ≈ `add_library(sine SHARED)`. `extern "C"` works the same as in C++.
-
----
-
-## Increment 2 — Sine generator in pure Rust + unit test  `[ ]`
-
-**What:** Replace stub with a sine oscillator. Phase-accumulator style. Functions exposed:
-- `init(sample_rate: f32)`
-- `set_freq(hz: f32)`
-- `process(out_ptr: *mut f32, len: usize)` — fill buffer with sine samples.
-
-State stored in a `static mut` block (single-instance for POC; revisit later).
-
-**Why:** Get DSP correct in isolation before adding browser complexity. `*mut f32` + `len` is the raw shared-memory pattern used between worklet JS and wasm.
-
-**Install:** none.
-
-**Test (cargo, host-native, NOT wasm):**
-- Add a `#[cfg(test)] mod tests` block.
-- Test: init at 48000, set_freq 480, process 100 samples. Assert sample[0] ≈ 0, samples cross zero ~10 times (period = 100 samples). Tolerance ±0.05.
-- `cargo test` — runs natively, no wasm needed.
-
-**C++ analogue:** Identical to a JUCE-style `prepare`/`setFrequency`/`processBlock`. `*mut f32` ≈ `float*`. `static mut` ≈ file-scope global, with a Rust safety wart (must wrap in `unsafe`) — don't worry about it for POC.
+**JUCE analogue:** `extern "C"` works identically. emcc flags ≈ Projucer "Extra Compiler Flags". `STANDALONE_WASM` ≈ "freestanding" — no host runtime expected.
 
 ---
 
-## Increment 3 — Build script / copy step  `[ ]`
+## Increment 2 — Wire RD_DSP submodule + paired `SynthProcessor` (C++ + JS)  `[ ]`
 
-**What:** A one-liner script (`build.ps1` or `Justfile` recipe) that runs `cargo build --release --target wasm32-unknown-unknown` then copies the `.wasm` into `public/sine.wasm`.
+**Architecture:** DSP code lives in standalone `RD_DSP` repo. WEB_SYNTH consumes via git submodule. `ENGINE/<MODULE>/` holds a C++ processor class owning `rd_dsp::` instances as members; matching JS `AudioWorkletProcessor` lives in `PUBLIC/`. Same conceptual name on both sides. See `.claude/rd_dsp_integration.md` for the full contract.
 
-**Why:** Browser fetches `.wasm` over HTTP. Convention: serve from a `public/` dir.
+**What:**
+1. RD_DSP must expose `rd_dsp::Oscillator` (header + source) per integration doc § 3.
+   - Per-sample API: `init(float sr)`, `setWaveform(Waveform)`, `setFreq(float)`, `reset()`, `getNextSample()`.
+   - Class with state (`mPhase`, `mPhaseInc`, `mSr`, `mWaveform`), `m`-prefix members.
+   - `enum class Waveform { Sine, Saw, Square, Triangle }` in same header.
+   - For Inc 2 only Sine path needs to actually generate; other waveforms can return 0.
+   - `#pragma once`, namespace `rd_dsp`, no JUCE / threads / filesystem.
+2. Rename WEB_SYNTH module: `ENGINE/SINE/` → `ENGINE/SYNTH/`. The wasm artifact becomes `synth.wasm`. (SINE was the stub-era name; once the C++ class is `SynthProcessor` and the JS is `synth-worklet.js`, "SYNTH" matches.)
+3. Add submodule to WEB_SYNTH: `git submodule add ../RD_DSP SUBMODULES/RD_DSP`.
+4. Update WEB_SYNTH root `CMakeLists.txt`:
+   ```cmake
+   set(BUILD_TESTS      OFF CACHE BOOL "" FORCE)
+   set(BUILD_STANDALONE OFF CACHE BOOL "" FORCE)
+   add_subdirectory(SUBMODULES/RD_DSP)
+   add_subdirectory(ENGINE/SYNTH)
+   ```
+5. Rewrite `ENGINE/SYNTH/synth_processor.cpp` per integration doc § 5:
+   - C++ class `SynthProcessor` with `rd_dsp::Oscillator mOscillator` member.
+   - Methods: `prepare`, `setWaveform`, `setFreq`, `reset`, `process(float*, int)`.
+   - File-scope `static SynthProcessor gSynth` for POC single-instance.
+   - `extern "C"` shims: `prepare`, `set_waveform`, `set_freq`, `reset`, `process`.
+6. Update `ENGINE/SYNTH/CMakeLists.txt`:
+   - `target_link_libraries(synth PRIVATE RD_DSP)`.
+   - `EXPORTED_FUNCTIONS=[_prepare,_set_waveform,_set_freq,_reset,_process]`.
+   - Post-build copies to `PUBLIC/synth.wasm`.
+7. Rename build script: `SCRIPTS/build_sine.py` → `SCRIPTS/build_synth.py`.
+8. Run `python SCRIPTS/regenSource.py` → emits `CMAKE/SYNTH_SOURCES.cmake`.
 
-**Install:** optionally `cargo install just` if user wants `Justfile` style. PowerShell script works fine without it.
+**Why:** Decouples DSP correctness from web plumbing. RD_DSP's tests (Catch2 + JUCE harness) verify sine math offline; WEB_SYNTH only proves the wasm shim + AudioWorklet wiring.
 
-**Test:** Run script. Confirm `public/sine.wasm` exists and matches the `target/.../sine.wasm` byte-size.
+**Test:**
+- DSP correctness: `cd RD_DSP; <build + run Tests>` (Catch2 unit tests pass for `Oscillator` Sine path).
+- Integration: `python SCRIPTS/build_synth.py --clean` produces `PUBLIC/synth.wasm` with `prepare`, `set_waveform`, `set_freq`, `reset`, `process` exports. `add` symbol gone. No Catch2 fetched during wasm build.
+
+**JUCE analogue:** RD_DSP plays the role JUCE's `dsp::` namespace does — pure DSP math, framework-agnostic. WEB_SYNTH's shim is the equivalent of a JUCE plugin's `AudioProcessor::processBlock` wrapper that adapts the host's buffer format.
+
+---
+
+## Increment 3 — Build script  `[x]`
+
+**Done 2026-05-07:** Folded into Inc 1 (CMake migration). `SCRIPTS/build_sine.py` configures + builds via `emcmake cmake -G Ninja`; CMake post-build copies to `PUBLIC/sine.wasm`.
 
 ---
 
 ## Increment 4 — Static server + HTML scaffold  `[ ]`
 
 **What:**
-- `public/index.html` — single button "Start", empty `<script type="module" src="main.js">`.
-- `public/main.js` — stub: on click, create `AudioContext`, log "ctx running".
-- Pick a static server: `npx serve public` (no install — uses npx) or Python `python -m http.server -d public 8080`.
+- `PUBLIC/index.html` — single "Start" button, `<script type="module" src="main.js">`.
+- `PUBLIC/main.js` — stub: on click, create `AudioContext`, log `state`.
+- Static server: `npx serve PUBLIC` (no install) or `python -m http.server -d PUBLIC 8080`.
 
-**Why:** Browsers block `AudioContext` until user gesture (autoplay policy). `file://` URLs cannot load `AudioWorklet` modules — must be served over HTTP/HTTPS.
-
-**Install:** Node (likely already present) or Python (already present).
+**Why:** Browsers block `AudioContext` until user gesture (autoplay policy). `file://` URLs cannot load AudioWorklet modules — must be served over HTTP/HTTPS.
 
 **Test:** Open `http://localhost:<port>`. Click button. DevTools console shows `state: "running"`.
 
@@ -122,43 +172,40 @@ State stored in a `static mut` block (single-instance for POC; revisit later).
 ## Increment 5 — AudioWorklet skeleton (silent)  `[ ]`
 
 **What:**
-- `public/sine-worklet.js` — defines `class SineProcessor extends AudioWorkletProcessor` with a `process(inputs, outputs, params)` that writes zeros (silence). `registerProcessor('sine', SineProcessor)`.
+- `PUBLIC/sine-worklet.js` — `class SineProcessor extends AudioWorkletProcessor`. `process(inputs, outputs, params)` writes zeros. `registerProcessor('sine', SineProcessor)`.
 - `main.js` — `await ctx.audioWorklet.addModule('sine-worklet.js')`, `new AudioWorkletNode(ctx, 'sine')`, connect to `ctx.destination`.
 
-**Why:** Decouples the audio-thread plumbing from wasm loading. If silence works, the worklet is wired correctly. If it doesn't, the wasm step would only confuse.
+**Why:** Decouple audio-thread plumbing from wasm loading. If silence works, worklet wired correctly.
 
-**Install:** none.
-
-**Test:** Click Start. No errors in console. CPU meter shows the worklet is alive (or add a `console.log` once on first `process` call — note: worklet `console.log` shows in main devtools).
+**Test:** Click Start. No console errors. `console.log` once on first `process` call (logs from worklet appear in main devtools).
 
 ---
 
 ## Increment 6 — Load wasm inside worklet  `[ ]`
 
 **What:**
-- Main thread fetches `sine.wasm` as `ArrayBuffer`, posts it to the worklet via `node.port.postMessage({ wasm })`.
-- Worklet receives, `WebAssembly.instantiate(wasm)`, stores `exports`, calls `init(sampleRate)`.
-- `process()` still writes zeros — wasm just loaded, not driving samples yet.
+- Main thread fetches `sine.wasm` as `ArrayBuffer`, posts to worklet via `node.port.postMessage({ wasm })`.
+- Worklet `port.onmessage`: `WebAssembly.instantiate(wasm, imports)`, store `exports`, call `init(sampleRate)`.
+- `process()` still writes zeros.
 
-**Why:** AudioWorklets cannot use `fetch` directly (no `window`). Main thread fetches, ships bytes via `MessagePort`. Standard pattern.
+**Imports object:** standalone wasm from emcc with no libc usage needs nothing. If `<cmath>` pulls in any imports (rare with `STANDALONE_WASM`), provide `env.emscripten_*` stubs as needed — discovered empirically.
 
-**Install:** none.
+**Why:** AudioWorklets cannot use `fetch` (no `window`). Main thread fetches, ships bytes via `MessagePort`. Standard pattern.
 
-**Test:** Console log on successful instantiation: `"wasm loaded, exports: [init, set_freq, process]"`. No audio change yet.
+**Test:** Console log `"wasm loaded, exports: [init, set_freq, process, memory, ...]"`. No audio change yet.
 
 ---
 
 ## Increment 7 — Drive samples from wasm  `[ ]`
 
 **What:**
-- Allocate a wasm-memory buffer once (write a Rust `alloc(len)` fn returning `*mut f32`, OR reuse a fixed static buffer of 128 samples — POC pick: static buffer, simpler).
-- Each `process()` call: call wasm `process(ptr, 128)`, read 128 floats out of `wasm.memory.buffer` via a `Float32Array` view, copy into `outputs[0][0]`.
+- In C++, declare a static buffer `float g_buf[128];` with an exported getter `extern "C" float* get_buf() { return g_buf; }`.
+- Worklet on init: `bufPtr = exports.get_buf()`, then construct `view = new Float32Array(exports.memory.buffer, bufPtr, 128)`.
+- Each `process()`: call `exports.process(bufPtr, 128)`, copy `view` into `outputs[0][0]`.
 
-**Why:** This is the hot path. 128-sample blocks at 48 kHz = ~2.7 ms. No allocation, no message-passing per block.
+**Why:** Hot path. 128-sample blocks at 48 kHz = ~2.7 ms. No allocation, no message-passing per block. `Float32Array` view is a zero-copy peek into wasm linear memory.
 
-**Install:** none.
-
-**Test:** Click Start → continuous tone audible. Set Rust default freq to 440 Hz. Confirm by ear (or oscilloscope in DevTools → Web Audio panel if installed).
+**Test:** Click Start → continuous tone audible. C++ default 440 Hz. Confirm by ear.
 
 ---
 
@@ -166,48 +213,45 @@ State stored in a `static mut` block (single-instance for POC; revisit later).
 
 **What:**
 - HTML `<input type="range" min="50" max="2000" value="440">`.
-- On `input` event, `node.port.postMessage({ type: 'freq', value: hz })`.
-- Worklet `port.onmessage` calls wasm `set_freq(hz)`.
+- On `input`: `node.port.postMessage({ type: 'freq', value: hz })`.
+- Worklet `port.onmessage` calls `exports.set_freq(hz)`.
 
-**Why:** Proves bidirectional control plane works. Slider → main → port → worklet → wasm.
+**Why:** Bidirectional control plane works. Slider → main → port → worklet → wasm.
 
-**Install:** none.
-
-**Test:** Drag slider, pitch tracks smoothly. No clicks (phase continuity is preserved because phase accumulator persists across blocks).
+**Test:** Drag slider, pitch tracks smoothly. No clicks (phase accumulator persists across blocks).
 
 ---
 
 ## Increment 9 — Recluse website integration sketch  `[ ]`
 
-**What:** Decide where this lives on `recluse.tools`. Options:
-- (a) New page `/SYNTH/index.html` in `RECLUSE_WEBSITE` repo, copy `public/` contents in.
-- (b) Subdomain `synth.recluse.tools`, deploy this repo's `public/` separately.
-- (c) Cloudflare Worker route serves wasm/JS from this repo.
+**What:** Decide where this lives on `recluse.tools`:
+- (a) New page `/SYNTH/index.html` in `RECLUSE_WEBSITE` repo.
+- (b) Subdomain `synth.recluse.tools`, deploy `PUBLIC/` separately.
+- (c) Cloudflare Worker route.
 
-Pick one with the user. Document choice here. No code yet — this is a planning checkpoint.
-
-**Why:** Don't pre-commit deployment shape until POC sounds correct.
-
-**Test:** N/A — design decision.
+Pick with user. Document. No code yet.
 
 ---
 
 ## Increment 10 — Hardening review (post-POC)  `[ ]`
 
-Punch list to revisit once sine is audible end-to-end:
+Punch list once sine audible end-to-end:
 
-- Replace `static mut` with a proper instance-per-worklet pattern.
-- Decide raw wasm vs. `wasm-bindgen` (raw is fine for now).
+- File-scope statics → instance-per-worklet pattern (C++ class, allocate via `new` in `init`, store opaque handle).
+- Decide raw wasm vs. emcc default JS glue (raw fine for now; default glue useful if `malloc`/exceptions/threading needed later).
 - `SharedArrayBuffer` for sample-accurate parameter automation (needs COOP/COEP headers).
 - Multi-voice / polyphony architecture.
-- Build pipeline: `wasm-opt`, watch mode, source maps for wasm.
-- Module structure: how does a second DSP node (e.g. filter) plug in?
-- Test strategy beyond hand-checks: headless audio capture? snapshot of first N samples?
+- Build pipeline: `wasm-opt` (already in emsdk), watch mode, source maps.
+- How a second DSP node (e.g. filter) plugs in.
+- Test strategy: headless audio capture, snapshot first N samples.
+- Porting JUCE `dsp::` modules — what extracts cleanly, what is host-coupled.
 
 ---
 
 ## Open questions to resolve as we go
 
-- Build runner: PowerShell script vs. `just`? (Default to `.ps1` until friction appears.)
-- Bundler: keep raw `<script type="module">` or introduce Vite when complexity grows? (Default: raw until it hurts.)
-- Where does `engine/` live — top-level of WEB_SYNTH repo, yes. Confirmed.
+- Build runner: bash script vs. CMake/Emscripten-CMake? Default to `build.sh` until friction.
+- emsdk PATH scoping: build scripts self-source `$EMSDK_DIR/emsdk_env.sh` (default `/c/emsdk`). No global PATH mutation, no `.bashrc` edit, no `--permanent`. Confirmed 2026-05-07.
+- Bundler: keep raw `<script type="module">` or introduce Vite when complexity grows? Default raw until it hurts.
+- `ENGINE/` lives top-level of WEB_SYNTH repo. Confirmed.
+- Naming: ALL CAPS for top-level dirs (`ENGINE/`, `PUBLIC/`). Confirmed 2026-05-06.

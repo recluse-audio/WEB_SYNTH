@@ -1,0 +1,15 @@
+# build artifacts
+BUILD/
+*.wasm
+*.o
+*.obj
+*.exe
+
+# python
+__pycache__/
+*.pyc
+
+# editor / OS
+.vscode/
+.DS_Store
+Thumbs.db
