@@ -154,7 +154,7 @@ emcc sine.cpp -O3 \
 
 ---
 
-## Increment 5 — AudioWorklet skeleton (silent)  `[ ]`
+## Increment 5 — AudioWorklet skeleton (silent)  `[x]`
 
 **What:**
 - `PUBLIC/synth-worklet.js` — `class SynthProcessor extends AudioWorkletProcessor`. `process(inputs, outputs, params)` writes zeros to `outputs[0][0]` and returns `true`. Bottom of file: `registerProcessor('synth', SynthProcessor)`.
@@ -171,7 +171,7 @@ emcc sine.cpp -O3 \
 
 ---
 
-## Increment 6 — Load wasm inside worklet  `[ ]`
+## Increment 6 — Load wasm inside worklet  `[x]`
 
 **What:**
 - Main thread (`main.js`): `fetch('synth.wasm') -> arrayBuffer()`, then `node.port.postMessage({ type: 'wasm', bytes })`.
@@ -186,7 +186,7 @@ emcc sine.cpp -O3 \
 
 ---
 
-## Increment 7 — Drive samples from wasm  `[ ]`
+## Increment 7 — Drive samples from wasm  `[x]`
 
 **C++ side already done.** The wasm exports `synth_get_output_buf()` returning a pointer to the internal 128-float `gOutBuf`, and `synth_process()` fills it. This increment is JS-only.
 
