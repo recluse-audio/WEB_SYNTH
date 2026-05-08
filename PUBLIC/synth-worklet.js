@@ -5,7 +5,6 @@ class SynthProcessor extends AudioWorkletProcessor
         super();
         this.exports = null;
         this.view = null;
-        this.diagLogged = false;
         this.port.onmessage = (e) => this._onMessage(e.data);
     }
 
@@ -25,6 +24,21 @@ class SynthProcessor extends AudioWorkletProcessor
             this.exports.synth_start();
             console.log('synth running, bufPtr:', bufPtr);
         }
+        else if (msg.type === 'freq')
+        {
+            if (!this.exports) return;
+            this.exports.synth_set_freq(msg.value);
+        }
+        else if (msg.type === 'start')
+        {
+            if (!this.exports) return;
+            this.exports.synth_start();
+        }
+        else if (msg.type === 'stop')
+        {
+            if (!this.exports) return;
+            this.exports.synth_stop();
+        }
     }
 
     process(inputs, outputs, params)
@@ -39,15 +53,6 @@ class SynthProcessor extends AudioWorkletProcessor
 
         this.exports.synth_process();
         out.set(this.view);
-
-        if (!this.diagLogged)
-        {
-            this.diagLogged = true;
-            console.log('diag — outputs:', outputs.length, 'channels:', outputs[0].length,
-                'block:', out.length, 'view[0..3]:', this.view[0], this.view[1], this.view[2], this.view[3],
-                'out[0..3]:', out[0], out[1], out[2], out[3]);
-        }
-
         return true;
     }
 }

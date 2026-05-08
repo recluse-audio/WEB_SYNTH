@@ -214,7 +214,7 @@ emcc sine.cpp -O3 \
 
 ---
 
-## Increment 8 — Frequency control from UI  `[ ]`
+## Increment 8 — Frequency control from UI  `[x]`
 
 **What:**
 - HTML: `<input type="range" min="50" max="2000" value="440" id="freq">`.
@@ -227,7 +227,7 @@ emcc sine.cpp -O3 \
 
 ---
 
-## Increment 9 — Recluse website integration sketch  `[ ]`
+## Increment 9 — Recluse website integration sketch  `[x]`
 
 **What:** Decide where this lives on `recluse.tools`:
 - (a) New page `/SYNTH/index.html` in `RECLUSE_WEBSITE` repo.
