@@ -1,0 +1,3 @@
+[submodule "SUBMODULES/RD_DSP"]
+	path = SUBMODULES/RD_DSP
+	url = https://github.com/recluse-audio/RD_DSP.git
