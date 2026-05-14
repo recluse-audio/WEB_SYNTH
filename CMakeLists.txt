@@ -16,3 +16,4 @@ add_subdirectory(SUBMODULES/RD_DSP)
 # Each ENGINE/<MODULE> defines its own wasm executable target.
 # Per-module source lists live in CMAKE/<MODULE>_SOURCES.cmake (regenSource.py).
 add_subdirectory(ENGINE/SYNTH)
+add_subdirectory(ENGINE/PULSAR)
