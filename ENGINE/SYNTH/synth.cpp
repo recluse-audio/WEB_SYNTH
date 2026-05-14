@@ -1,5 +1,5 @@
 // ENGINE/SYNTH/synth.cpp
-// Step 6: SynthProcessor + internal output buffer exported for zero-copy JS access.
+// SynthProcessor + internal output buffer exported for zero-copy JS access.
 // JS calls synth_get_output_buf() once at init, wraps the pointer as a Float32Array
 // view over wasm linear memory, then calls synth_process() per audio block.
 //
