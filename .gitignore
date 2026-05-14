@@ -1,6 +1,7 @@
 # build artifacts
 BUILD/
 *.wasm
+!PUBLIC/*.wasm
 *.o
 *.obj
 *.exe
