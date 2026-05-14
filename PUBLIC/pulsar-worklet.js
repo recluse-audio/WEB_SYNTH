@@ -20,11 +20,7 @@ class PulsarProcessor extends AudioWorkletProcessor
             const bufPtr = this.exports.pulsar_get_output_buf();
             this.view = new Float32Array(this.exports.memory.buffer, bufPtr, 128);
 
-            this.exports.pulsar_set_emission_rate(10);
-            this.exports.pulsar_set_formant_freq(440);
-            this.exports.pulsar_set_wave_position(0);
-            this.exports.pulsar_set_gain(0.3);
-            console.log('pulsar ready, bufPtr:', bufPtr);
+            this.port.postMessage({ type: 'ready' });
         }
         else if (msg.type === 'emissionRate')
         {

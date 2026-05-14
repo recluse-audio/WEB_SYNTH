@@ -20,9 +20,7 @@ class SynthProcessor extends AudioWorkletProcessor
             const bufPtr = this.exports.synth_get_output_buf();
             this.view = new Float32Array(this.exports.memory.buffer, bufPtr, 128);
 
-            this.exports.synth_set_freq(440);
-            this.exports.synth_start();
-            console.log('synth running, bufPtr:', bufPtr);
+            this.port.postMessage({ type: 'ready' });
         }
         else if (msg.type === 'freq')
         {

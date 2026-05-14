@@ -248,8 +248,25 @@ export class RdPulsar extends HTMLElement
         this._node = new AudioWorkletNode(this._ctx, 'pulsar');
         this._node.connect(this._ctx.destination);
 
+        // Worklet posts {type:'ready'} once wasm is instantiated and prepared.
+        const ready = new Promise((resolve) =>
+        {
+            const onReady = (e) =>
+            {
+                if (e.data && e.data.type === 'ready')
+                {
+                    this._node.port.removeEventListener('message', onReady);
+                    resolve();
+                }
+            };
+            this._node.port.addEventListener('message', onReady);
+            this._node.port.start();
+        });
+
         const bytes = await getWasmBytes();
         this._node.port.postMessage({ type: 'wasm', bytes }, [bytes]);
+
+        await ready;
 
         const root = this.shadowRoot;
         this._node.port.postMessage({ type: 'emissionRate', value: +root.getElementById('emission').value });
