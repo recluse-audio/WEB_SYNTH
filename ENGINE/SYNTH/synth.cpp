@@ -7,17 +7,22 @@
 // Multi-voice / opaque-handle pattern arrives later (see rd_dsp_integration_plan.md §5).
 
 #include "OSCILLATOR/Oscillator.h"
+#include "WAVEFORM/Wavetable.h"
 #include "RD_BUFFER/RD_Buffer.h"
 
 class SynthProcessor
 {
 public:
-    static constexpr int kBlockSize = 128;
+    static constexpr int kBlockSize     = 128;
+    static constexpr int kWaveformSize  = 2048;
+
+    SynthProcessor() : mOscillator(mWavetable) {}
 
     void prepare(double sampleRate)
     {
-        mWorkspace.setSize(1, kBlockSize);
-        mOscillator.prepare(sampleRate);
+        mWavetable.fillWithBasicShapes(kWaveformSize);
+        mProcessBuffer.setSize(1, kBlockSize);
+        mOscillator.prepare(sampleRate, kBlockSize);
     }
 
     void setFreq(float hz) { mOscillator.setFreq(hz); }
@@ -28,16 +33,17 @@ public:
     // clear() guarantees silence regardless.
     void process(float* out)
     {
-        mWorkspace.clear();
-        mOscillator.process(mWorkspace);
-        const float* src = mWorkspace.getReadPointer(0);
+        mProcessBuffer.clear();
+        mOscillator.process(mProcessBuffer);
+        const float* src = mProcessBuffer.getReadPointer(0);
         for (int i = 0; i < kBlockSize; ++i)
             out[i] = src[i];
     }
 
 private:
+    rd_dsp::Wavetable  mWavetable;
     rd_dsp::Oscillator mOscillator;
-    rd_dsp::RD_Buffer  mWorkspace;
+    rd_dsp::RD_Buffer  mProcessBuffer;
 };
 
 static SynthProcessor gSynth;
