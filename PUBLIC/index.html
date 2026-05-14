@@ -5,12 +5,9 @@
     <title>WEB_SYNTH</title>
 </head>
 <body>
-    <button id="start">Start</button>
-    <button id="stop">Stop</button>
-    <label>
-        Freq: <input type="range" id="freq" min="50" max="2000" value="440">
-        <output id="freqOut">440</output> Hz
-    </label>
-    <script type="module" src="main.js"></script>
+    <rd-synth></rd-synth>
+    <rd-pulsar></rd-pulsar>
+    <script type="module" src="rd-synth.js"></script>
+    <script type="module" src="rd-pulsar.js"></script>
 </body>
 </html>
