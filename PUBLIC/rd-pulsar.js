@@ -53,17 +53,6 @@ const TEMPLATE = `
         box-sizing: border-box;
     }
 
-    .bg-banner
-    {
-        display: block;
-        margin: -12px -12px 12px -12px;
-    }
-
-    .bg-banner recluse-pulsar-background
-    {
-        display: block;
-    }
-
     h3
     {
         margin: 0 0 8px 0;
@@ -137,10 +126,6 @@ const TEMPLATE = `
         font-variant-numeric: tabular-nums;
     }
 </style>
-
-<div class="bg-banner">
-    <recluse-pulsar-background id="bg" width="336" height="36"></recluse-pulsar-background>
-</div>
 
 <h3>Pulsar</h3>
 <div class="row">
