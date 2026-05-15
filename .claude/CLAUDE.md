@@ -51,6 +51,7 @@ For deeper detail, see:
 
 - `ENGINE/<MODULE>/` — C++ source for one wasm module (currently `SYNTH/`).
 - `SUBMODULES/RD_DSP/` — pure DSP submodule, built into the wasm via `add_subdirectory` + `target_link_libraries`.
+- `PUBLIC/SUBMODULES/RECLUSE_UI/` — shared design-system submodule (tokens + custom-element components). Browser-served directly from `PUBLIC/`. Consumed by `index.html` (`tokens/*.css`) and `rd-pulsar.js` shadow root (CSS vars inherit through shadow boundary). Bump pointer: `git submodule update --remote PUBLIC/SUBMODULES/RECLUSE_UI`. Use `--color-*` token vars over hex literals in component styles.
 - `CMAKE/<MODULE>_SOURCES.cmake` — generated, committed source lists.
 - `SCRIPTS/` — Python build/dev helpers.
 - `PUBLIC/` — static web assets + emitted `.wasm`. Must be served over HTTP/HTTPS (AudioWorklet cannot load from `file://`).

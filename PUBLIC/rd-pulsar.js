@@ -38,23 +38,30 @@ const TEMPLATE = `
 <style>
     :host
     {
-        --rd-bg:        #1a1a1a;
-        --rd-fg:        #e8e8e8;
-        --rd-accent:    #ff6b00;
-        --rd-border:    #2a2a2a;
         --rd-radius:    8px;
         --rd-pad:       12px;
         --rd-width:     360px;
 
         display: inline-block;
         width: var(--rd-width);
-        font-family: ui-sans-serif, system-ui, sans-serif;
-        color: var(--rd-fg);
-        background: var(--rd-bg);
-        border: 1px solid var(--rd-border);
+        font-family: 'BerlinSans', ui-sans-serif, system-ui, sans-serif;
+        color: var(--color-text, #e8e8e8);
+        background: var(--color-surface, #1a1a1a);
+        border: 1px solid var(--color-border, #2a2a2a);
         border-radius: var(--rd-radius);
         padding: var(--rd-pad);
         box-sizing: border-box;
+    }
+
+    .bg-banner
+    {
+        display: block;
+        margin: -12px -12px 12px -12px;
+    }
+
+    .bg-banner recluse-pulsar-background
+    {
+        display: block;
     }
 
     h3
@@ -62,7 +69,28 @@ const TEMPLATE = `
         margin: 0 0 8px 0;
         font-size: 14px;
         font-weight: 600;
-        color: var(--rd-accent);
+        color: var(--color-accent, #ff6b00);
+    }
+
+    .gain-row
+    {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        margin-bottom: 8px;
+    }
+
+    .gain-row recluse-knob
+    {
+        flex: 0 0 auto;
+    }
+
+    .gain-row .gain-controls
+    {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        gap: 4px;
     }
 
     .row
@@ -75,8 +103,8 @@ const TEMPLATE = `
 
     button
     {
-        background: var(--rd-accent);
-        color: #000;
+        background: var(--color-accent, #ff6b00);
+        color: var(--color-bg, #000);
         border: 0;
         border-radius: 4px;
         padding: 6px 12px;
@@ -107,7 +135,7 @@ const TEMPLATE = `
     input[type="range"]
     {
         flex: 1;
-        accent-color: var(--rd-accent);
+        accent-color: var(--color-accent, #ff6b00);
     }
 
     output
@@ -117,6 +145,10 @@ const TEMPLATE = `
         font-variant-numeric: tabular-nums;
     }
 </style>
+
+<div class="bg-banner">
+    <recluse-pulsar-background id="bg" width="336" height="36"></recluse-pulsar-background>
+</div>
 
 <h3>Pulsar</h3>
 <div class="row">
@@ -144,12 +176,14 @@ const TEMPLATE = `
         <output id="wavePosOut">0.00</output>
     </label>
 </div>
-<div class="row">
-    <label>
-        <span class="lbl">Gain</span>
-        <input type="range" id="gain" min="0" max="1" step="0.001" value="0.3">
-        <output id="gainOut">0.30</output>
-    </label>
+<div class="gain-row">
+    <recluse-knob id="gainKnob" value="0.3" label="Gain"></recluse-knob>
+    <div class="gain-controls">
+        <label>
+            <input type="range" id="gain" min="0" max="1" step="0.001" value="0.3">
+            <output id="gainOut">0.30</output>
+        </label>
+    </div>
 </div>
 `;
 
@@ -188,6 +222,7 @@ export class RdPulsar extends HTMLElement
         const wavePosOut  = root.getElementById('wavePosOut');
         const gain        = root.getElementById('gain');
         const gainOut     = root.getElementById('gainOut');
+        const gainKnob    = root.getElementById('gainKnob');
 
         startBtn.addEventListener('click', async () =>
         {
@@ -232,6 +267,7 @@ export class RdPulsar extends HTMLElement
         {
             const value = +e.target.value;
             gainOut.value = value.toFixed(2);
+            if (gainKnob) gainKnob.value = value;
             if (this._node) this._node.port.postMessage({ type: 'gain', value });
         });
     }
