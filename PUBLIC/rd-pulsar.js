@@ -85,14 +85,6 @@ const TEMPLATE = `
         flex: 0 0 auto;
     }
 
-    .gain-row .gain-controls
-    {
-        display: flex;
-        flex-direction: column;
-        flex: 1;
-        gap: 4px;
-    }
-
     .row
     {
         display: flex;
@@ -178,12 +170,6 @@ const TEMPLATE = `
 </div>
 <div class="gain-row">
     <recluse-knob id="gainKnob" value="0.3" label="Gain"></recluse-knob>
-    <div class="gain-controls">
-        <label>
-            <input type="range" id="gain" min="0" max="1" step="0.001" value="0.3">
-            <output id="gainOut">0.30</output>
-        </label>
-    </div>
 </div>
 `;
 
@@ -220,8 +206,6 @@ export class RdPulsar extends HTMLElement
         const formantOut  = root.getElementById('formantOut');
         const wavePos     = root.getElementById('wavePos');
         const wavePosOut  = root.getElementById('wavePosOut');
-        const gain        = root.getElementById('gain');
-        const gainOut     = root.getElementById('gainOut');
         const gainKnob    = root.getElementById('gainKnob');
 
         startBtn.addEventListener('click', async () =>
@@ -263,11 +247,9 @@ export class RdPulsar extends HTMLElement
             if (this._node) this._node.port.postMessage({ type: 'wavePos', value });
         });
 
-        gain.addEventListener('input', (e) =>
+        gainKnob.addEventListener('change', (e) =>
         {
-            const value = +e.target.value;
-            gainOut.value = value.toFixed(2);
-            if (gainKnob) gainKnob.value = value;
+            const value = +e.detail.value;
             if (this._node) this._node.port.postMessage({ type: 'gain', value });
         });
     }
@@ -308,7 +290,7 @@ export class RdPulsar extends HTMLElement
         this._node.port.postMessage({ type: 'emissionRate', value: +root.getElementById('emission').value });
         this._node.port.postMessage({ type: 'formantFreq',  value: +root.getElementById('formant').value });
         this._node.port.postMessage({ type: 'wavePos',      value: +root.getElementById('wavePos').value });
-        this._node.port.postMessage({ type: 'gain',         value: +root.getElementById('gain').value });
+        this._node.port.postMessage({ type: 'gain',         value: +root.getElementById('gainKnob').value });
     }
 }
 
