@@ -1,6 +1,10 @@
 // <rd-pulsar> Web Component — embeddable Pulsar instance.
 // UI owned by <recluse-pulsar-synth> (RECLUSE_UI submodule).
 // This file: AudioWorklet + wasm wiring only.
+//
+// Contract: <recluse-pulsar-synth> emits normalized values (0..1) in
+// `paramchange`. Worklet expects real units. This shim owns the ranges
+// and denormalizes before posting.
 
 const WORKLET_URL = new URL('./pulsar-worklet.js', import.meta.url).href;
 const WASM_URL    = new URL('./pulsar.wasm',        import.meta.url).href;
@@ -9,13 +13,15 @@ let defaultContext = null;
 const workletLoaded = new WeakMap();
 let wasmBytesPromise = null;
 
-const PARAM_MAP =
+const PARAM_RANGES =
 {
-    emission: 'emissionRate',
-    formant:  'formantFreq',
-    wavePos:  'wavePos',
-    gain:     'gain'
+    emission: { min: 0.125, max: 150,  type: 'emissionRate' },
+    formant:  { min: 150,   max: 2000, type: 'formantFreq'  },
+    wavePos:  { min: 0,     max: 1,    type: 'wavePos'      },
+    gain:     { min: 0,     max: 1,    type: 'gain'         }
 };
+
+const denormalize = (n, min, max) => min + n * (max - min);
 
 function getDefaultContext()
 {
@@ -50,7 +56,13 @@ export class RdPulsar extends HTMLElement
         super();
         this._ctx  = null;
         this._node = null;
-        this.attachShadow({ mode: 'open' }).innerHTML = '<recluse-pulsar-synth></recluse-pulsar-synth>';
+        this.attachShadow({ mode: 'open' }).innerHTML = `
+            <recluse-pulsar-synth
+                emission-min="0.125" emission-max="150"  emission-unit="Hz"
+                formant-min="150"    formant-max="2000"  formant-unit="Hz"
+                wave-pos-min="0"     wave-pos-max="1"    wave-pos-unit=""
+                gain-min="0"         gain-max="1"        gain-unit="">
+            </recluse-pulsar-synth>`;
     }
 
     set audioContext(ctx)
@@ -83,9 +95,10 @@ export class RdPulsar extends HTMLElement
         ui.addEventListener('paramchange', (e) =>
         {
             if (!this._node) return;
-            const type = PARAM_MAP[e.detail.param];
-            if (!type) return;
-            this._node.port.postMessage({ type, value: e.detail.value });
+            const { param, value } = e.detail;
+            const r = PARAM_RANGES[param];
+            if (!r) return;
+            this._node.port.postMessage({ type: r.type, value: denormalize(value, r.min, r.max) });
         });
     }
 
@@ -121,11 +134,13 @@ export class RdPulsar extends HTMLElement
 
         await ready;
 
+        // Initial param push — read normalized values off component, denormalize, post.
         const ui = this.shadowRoot.querySelector('recluse-pulsar-synth');
-        this._node.port.postMessage({ type: 'emissionRate', value: +ui.emission });
-        this._node.port.postMessage({ type: 'formantFreq',  value: +ui.formant  });
-        this._node.port.postMessage({ type: 'wavePos',      value: +ui.wavePos  });
-        this._node.port.postMessage({ type: 'gain',         value: +ui.gain     });
+        for (const [param, r] of Object.entries(PARAM_RANGES))
+        {
+            const n = +ui[param];
+            this._node.port.postMessage({ type: r.type, value: denormalize(n, r.min, r.max) });
+        }
     }
 }
 

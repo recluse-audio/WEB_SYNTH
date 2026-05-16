@@ -22,7 +22,8 @@
       "Read(//c/REPOS/PROJECTS/RECLUSE_WEBSITE/**)",
       "Read(//c/REPOS/PROJECTS/**)",
       "Read(//c/REPOS/**)",
-      "Bash(git -C PUBLIC/SUBMODULES/RECLUSE_UI show HEAD~1:dist/knob.js)"
+      "Bash(git -C PUBLIC/SUBMODULES/RECLUSE_UI show HEAD~1:dist/knob.js)",
+      "Bash(git submodule *)"
     ]
   }
 }
