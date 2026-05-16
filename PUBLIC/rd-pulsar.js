@@ -1,5 +1,6 @@
 // <rd-pulsar> Web Component — embeddable Pulsar instance.
-// Mirrors rd-synth.js. Each element owns one AudioWorkletNode.
+// UI owned by <recluse-pulsar-synth> (RECLUSE_UI submodule).
+// This file: AudioWorklet + wasm wiring only.
 
 const WORKLET_URL = new URL('./pulsar-worklet.js', import.meta.url).href;
 const WASM_URL    = new URL('./pulsar.wasm',        import.meta.url).href;
@@ -7,6 +8,14 @@ const WASM_URL    = new URL('./pulsar.wasm',        import.meta.url).href;
 let defaultContext = null;
 const workletLoaded = new WeakMap();
 let wasmBytesPromise = null;
+
+const PARAM_MAP =
+{
+    emission: 'emissionRate',
+    formant:  'formantFreq',
+    wavePos:  'wavePos',
+    gain:     'gain'
+};
 
 function getDefaultContext()
 {
@@ -34,139 +43,14 @@ function getWasmBytes()
     return wasmBytesPromise.then(buf => buf.slice(0));
 }
 
-const TEMPLATE = `
-<style>
-    :host
-    {
-        --rd-radius:    8px;
-        --rd-pad:       12px;
-        --rd-width:     360px;
-
-        display: inline-block;
-        width: var(--rd-width);
-        font-family: 'BerlinSans', ui-sans-serif, system-ui, sans-serif;
-        color: var(--color-text, #e8e8e8);
-        background: var(--color-surface, #1a1a1a);
-        border: 1px solid var(--color-border, #2a2a2a);
-        border-radius: var(--rd-radius);
-        padding: var(--rd-pad);
-        box-sizing: border-box;
-    }
-
-    h3
-    {
-        margin: 0 0 8px 0;
-        font-size: 14px;
-        font-weight: 600;
-        color: var(--color-accent, #ff6b00);
-    }
-
-    .gain-row
-    {
-        display: flex;
-        gap: 12px;
-        align-items: center;
-        margin-bottom: 8px;
-    }
-
-    .gain-row recluse-knob
-    {
-        flex: 0 0 auto;
-    }
-
-    .row
-    {
-        display: flex;
-        gap: 8px;
-        align-items: center;
-        margin-bottom: 8px;
-    }
-
-    button
-    {
-        background: var(--color-accent, #ff6b00);
-        color: var(--color-bg, #000);
-        border: 0;
-        border-radius: 4px;
-        padding: 6px 12px;
-        font: inherit;
-        cursor: pointer;
-    }
-
-    button[disabled]
-    {
-        opacity: 0.5;
-        cursor: default;
-    }
-
-    label
-    {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 12px;
-        width: 100%;
-    }
-
-    .lbl
-    {
-        min-width: 7ch;
-    }
-
-    input[type="range"]
-    {
-        flex: 1;
-        accent-color: var(--color-accent, #ff6b00);
-    }
-
-    output
-    {
-        min-width: 6ch;
-        text-align: right;
-        font-variant-numeric: tabular-nums;
-    }
-</style>
-
-<h3>Pulsar</h3>
-<div class="row">
-    <button part="start" id="start">Start</button>
-    <button part="stop"  id="stop" disabled>Stop</button>
-</div>
-<div class="row">
-    <label>
-        <span class="lbl">Emission</span>
-        <input type="range" id="emission" min="0.125" max="150" step="0.125" value="10">
-        <output id="emissionOut">10</output> Hz
-    </label>
-</div>
-<div class="row">
-    <label>
-        <span class="lbl">Formant</span>
-        <input type="range" id="formant" min="150" max="2000" step="1" value="440">
-        <output id="formantOut">440</output> Hz
-    </label>
-</div>
-<div class="row">
-    <label>
-        <span class="lbl">Wave Pos</span>
-        <input type="range" id="wavePos" min="0" max="1" step="0.001" value="0">
-        <output id="wavePosOut">0.00</output>
-    </label>
-</div>
-<div class="gain-row">
-    <recluse-knob id="gainKnob" value="0.3" label="Gain"></recluse-knob>
-</div>
-`;
-
 export class RdPulsar extends HTMLElement
 {
     constructor()
     {
         super();
-        this._ctx     = null;
-        this._node    = null;
-        this._started = false;
-        this.attachShadow({ mode: 'open' }).innerHTML = TEMPLATE;
+        this._ctx  = null;
+        this._node = null;
+        this.attachShadow({ mode: 'open' }).innerHTML = '<recluse-pulsar-synth></recluse-pulsar-synth>';
     }
 
     set audioContext(ctx)
@@ -182,60 +66,26 @@ export class RdPulsar extends HTMLElement
 
     connectedCallback()
     {
-        const root        = this.shadowRoot;
-        const startBtn    = root.getElementById('start');
-        const stopBtn     = root.getElementById('stop');
-        const emission    = root.getElementById('emission');
-        const emissionOut = root.getElementById('emissionOut');
-        const formant     = root.getElementById('formant');
-        const formantOut  = root.getElementById('formantOut');
-        const wavePos     = root.getElementById('wavePos');
-        const wavePosOut  = root.getElementById('wavePosOut');
-        const gainKnob    = root.getElementById('gainKnob');
+        const ui = this.shadowRoot.querySelector('recluse-pulsar-synth');
 
-        startBtn.addEventListener('click', async () =>
+        ui.addEventListener('start', async () =>
         {
             await this._ensureNode();
             this._node.port.postMessage({ type: 'start' });
-            this._started = true;
-            startBtn.disabled = true;
-            stopBtn.disabled  = false;
         });
 
-        stopBtn.addEventListener('click', () =>
+        ui.addEventListener('stop', () =>
         {
             if (!this._node) return;
             this._node.port.postMessage({ type: 'stop' });
-            this._started = false;
-            startBtn.disabled = false;
-            stopBtn.disabled  = true;
         });
 
-        emission.addEventListener('input', (e) =>
+        ui.addEventListener('paramchange', (e) =>
         {
-            const value = +e.target.value;
-            emissionOut.value = value;
-            if (this._node) this._node.port.postMessage({ type: 'emissionRate', value });
-        });
-
-        formant.addEventListener('input', (e) =>
-        {
-            const value = +e.target.value;
-            formantOut.value = value;
-            if (this._node) this._node.port.postMessage({ type: 'formantFreq', value });
-        });
-
-        wavePos.addEventListener('input', (e) =>
-        {
-            const value = +e.target.value;
-            wavePosOut.value = value.toFixed(2);
-            if (this._node) this._node.port.postMessage({ type: 'wavePos', value });
-        });
-
-        gainKnob.addEventListener('change', (e) =>
-        {
-            const value = +e.detail.value;
-            if (this._node) this._node.port.postMessage({ type: 'gain', value });
+            if (!this._node) return;
+            const type = PARAM_MAP[e.detail.param];
+            if (!type) return;
+            this._node.port.postMessage({ type, value: e.detail.value });
         });
     }
 
@@ -271,11 +121,11 @@ export class RdPulsar extends HTMLElement
 
         await ready;
 
-        const root = this.shadowRoot;
-        this._node.port.postMessage({ type: 'emissionRate', value: +root.getElementById('emission').value });
-        this._node.port.postMessage({ type: 'formantFreq',  value: +root.getElementById('formant').value });
-        this._node.port.postMessage({ type: 'wavePos',      value: +root.getElementById('wavePos').value });
-        this._node.port.postMessage({ type: 'gain',         value: +root.getElementById('gainKnob').value });
+        const ui = this.shadowRoot.querySelector('recluse-pulsar-synth');
+        this._node.port.postMessage({ type: 'emissionRate', value: +ui.emission });
+        this._node.port.postMessage({ type: 'formantFreq',  value: +ui.formant  });
+        this._node.port.postMessage({ type: 'wavePos',      value: +ui.wavePos  });
+        this._node.port.postMessage({ type: 'gain',         value: +ui.gain     });
     }
 }
 

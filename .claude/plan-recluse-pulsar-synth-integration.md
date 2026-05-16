@@ -20,6 +20,9 @@ After every increment, flip status, append notes under the increment, surface an
 ## Top-of-file running notes
 
 - 2026-05-15: Plan seeded from RECLUSE_UI Plan B. `dist/pulsar-synth.js` not yet published — Inc 1 (submodule bump) is blocked until RECLUSE_UI ships it.
+- 2026-05-15: Inc 0 verified — `dist/pulsar-synth.js` present at submodule pointer `9150751`. Event contract confirmed: `paramchange { param, value }` (bubbles+composed), `start`, `stop` (bubbles+composed). Props/attrs: `emission` (default 10), `formant` (440), `wavePos` → attr `wave-pos` (0), `gain` (0.3), `running` (Boolean — component owns button disabled state internally). `param` values: `'emission' | 'formant' | 'wavePos' | 'gain'`. Inc 1 already satisfied — submodule pointer was bumped in earlier commit (`8ab069c`-vicinity), pulsar-synth.js present in committed `dist/`.
+- 2026-05-15: Inc 5 gotcha — Svelte customElement defaults live on JS getters, NOT as reflected DOM attributes. `getAttribute('gain')` returns null → `+null === 0` → silence. Fixed by reading props (`ui.gain`, `ui.emission`, etc.) instead of `getAttribute`. Future RECLUSE_UI consumers: prefer props over attrs for default reads.
+- 2026-05-15: Smoke test passed. Start engages audio, sliders + knob audibly modulate, Stop silences. Integration shipped.
 - Audience note: user is C++/DSP veteran, comfortable with web component / Custom Elements basics. Pedagogy bias: shadow DOM composition, CustomEvent bubbling across shadow boundary, submodule bump hygiene.
 
 ---
@@ -41,18 +44,18 @@ Visual parity with current build. `<rd-pulsar>` tag name + public API unchanged.
 
 ## Increments
 
-### Inc 0 — Verify RECLUSE_UI publish  `[!]`
+### Inc 0 — Verify RECLUSE_UI publish  `[x]`
 
 - Check `PUBLIC/SUBMODULES/RECLUSE_UI/dist/pulsar-synth.js` exists after submodule update.
 - Inspect event contract: `paramchange` detail shape (`{ param, value }`), `start`, `stop` events, initial attribute names (`emission`, `formant`, `wave-pos`, `gain`).
 - If missing or shape unclear: hand back to RECLUSE_UI session, block here.
 
-### Inc 1 — Bump RECLUSE_UI submodule  `[ ]`
+### Inc 1 — Bump RECLUSE_UI submodule  `[x]`
 
 - `git submodule update --remote PUBLIC/SUBMODULES/RECLUSE_UI`
 - Commit pointer bump separately from code change. Message: `bump RECLUSE_UI: pulsar-synth component`.
 
-### Inc 2 — Load new bundles in `PUBLIC/index.html`  `[ ]`
+### Inc 2 — Load new bundles in `PUBLIC/index.html`  `[x]`
 
 - Add module script tags alongside existing `pulsar-background.js`:
   ```html
@@ -61,7 +64,7 @@ Visual parity with current build. `<rd-pulsar>` tag name + public API unchanged.
   ```
 - Order: load before `rd-pulsar.js` so `<recluse-pulsar-synth>` is defined when `rd-pulsar` upgrades.
 
-### Inc 3 — Strip `TEMPLATE` from `rd-pulsar.js`  `[ ]`
+### Inc 3 — Strip `TEMPLATE` from `rd-pulsar.js`  `[x]`
 
 - Delete `TEMPLATE` constant (lines 37–159) entirely.
 - Replace `this.attachShadow({...}).innerHTML = TEMPLATE;` with:
@@ -69,7 +72,7 @@ Visual parity with current build. `<rd-pulsar>` tag name + public API unchanged.
   this.attachShadow({ mode: 'open' }).innerHTML = '<recluse-pulsar-synth></recluse-pulsar-synth>';
   ```
 
-### Inc 4 — Rewrite `connectedCallback` event wiring  `[ ]`
+### Inc 4 — Rewrite `connectedCallback` event wiring  `[x]`
 
 - Remove all `getElementById` lookups + per-control `addEventListener('input', ...)` handlers.
 - Single query: `const ui = this.shadowRoot.querySelector('recluse-pulsar-synth');`
@@ -79,7 +82,7 @@ Visual parity with current build. `<rd-pulsar>` tag name + public API unchanged.
   - `stop` → guard on `this._node`, then `port.postMessage({ type: 'stop' });`
 - Drop `this._started` + button-disable bookkeeping — `<recluse-pulsar-synth>` owns button state.
 
-### Inc 5 — Initial param push from new UI  `[ ]`
+### Inc 5 — Initial param push from new UI  `[x]`
 
 - In `_ensureNode`, replace tail-end `port.postMessage` block (lines 274–278) that reads old DOM inputs with reads from `<recluse-pulsar-synth>` attrs:
   ```js
@@ -91,11 +94,11 @@ Visual parity with current build. `<rd-pulsar>` tag name + public API unchanged.
   ```
 - Alternative: skip if RECLUSE_UI defaults match worklet's compiled-in defaults. Decide after inspecting Inc 0 contract.
 
-### Inc 6 — Keep untouched  `[ ]`
+### Inc 6 — Keep untouched  `[x]`
 
 Sanity: `_ensureNode`, `getWasmBytes`, `ensureWorkletLoaded`, `WORKLET_URL`, `WASM_URL`, `defaultContext`, `workletLoaded`, `wasmBytesPromise`, `set audioContext` / `get audioContext` — unchanged.
 
-### Inc 7 — Smoke test in browser  `[ ]`
+### Inc 7 — Smoke test in browser  `[x]`
 
 - Serve `PUBLIC/` (existing dev workflow). AudioWorklet requires HTTP/HTTPS — no `file://`.
 - Verify:
@@ -106,7 +109,7 @@ Sanity: `_ensureNode`, `getWasmBytes`, `ensureWorkletLoaded`, `WORKLET_URL`, `WA
   - Page-level `data-color-palette="..."` swap recolors Pulsar UI without code change.
 - If visual regression vs current build: file diff in RECLUSE_UI session, not here.
 
-### Inc 8 — Dead code sweep  `[ ]`
+### Inc 8 — Dead code sweep  `[x]`
 
 - Strip unused CSS-var fallbacks / leftover refs in `rd-pulsar.js`.
 - Confirm no `<style>` block remains in this file.
