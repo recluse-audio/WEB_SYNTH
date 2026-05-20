@@ -12,7 +12,7 @@ if(EMSCRIPTEN)
     target_link_options(synth PRIVATE
         "-sWASM=1"
         "-sSTANDALONE_WASM=1"
-        "-sEXPORTED_FUNCTIONS=[_synth_prepare,_synth_set_freq,_synth_start,_synth_stop,_synth_process,_synth_get_output_buf]"
+        "-sEXPORTED_FUNCTIONS=[_synth_prepare,_synth_set_freq,_synth_start,_synth_stop,_synth_process,_synth_get_output_buf,_synth_display_buf_ptr,_synth_display_buf_size,_synth_fill_display_buf]"
         "--no-entry"
     )
 

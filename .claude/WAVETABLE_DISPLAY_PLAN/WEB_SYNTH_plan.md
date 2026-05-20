@@ -12,8 +12,8 @@ Bridge `rd_dsp::Wavetable::fillDisplayBuffer` (in the wasm) to a `<recluse-wavet
 
 ## Preconditions
 
-- [ ] RD_DSP increment 3 landed and tagged (see [`RD_DSP_plan.md`](./RD_DSP_plan.md)).
-- [ ] RECLUSE_UI increment 6 landed and `dist/wavetable-display.js` committed (see [`RECLUSE_UI_plan.md`](./RECLUSE_UI_plan.md)).
+- [x] RD_DSP increment 3 landed (also 4 — `fillDisplayBufferAveraged` available). Submodule HEAD `06ab633` == `origin/main`.
+- [x] RECLUSE_UI increment 6 landed; `dist/wavetable-display.js` present. Submodule HEAD `c06db9e` == `origin/main`.
 
 If either is `[ ]`, this plan stops at increment 1 and waits.
 
@@ -39,7 +39,7 @@ The display buffer is a fixed-size `std::vector<float>` owned by the C++ shim (s
 
 ## Increments
 
-### [ ] 1. Confirm preconditions
+### [x] 1. Confirm preconditions
 - **FILES CHANGING:** none (status check).
 - **WHY:** Block on RD_DSP + RECLUSE_UI deliverables before touching shim code.
 - Check submodule HEADs against the tagged commits referenced in each plan's increment 5/6.
@@ -48,31 +48,45 @@ The display buffer is a fixed-size `std::vector<float>` owned by the C++ shim (s
   - `git submodule update --remote PUBLIC/SUBMODULES/RECLUSE_UI`
 - Commit the pointer bumps with a clear message referencing both plans.
 
-### [ ] 2. Shim — display buffer storage + exports
-- **FILES CHANGING:** `ENGINE/SYNTH/<host class>.h/.cpp` (whichever class currently owns the `rd_dsp::Wavetable` instance), `ENGINE/SYNTH/synth_c_api.cpp` (or wherever the `extern "C"` exports already live).
-- **WHY:** Give JS a stable pointer + fill entry point.
-- Add member: `std::vector<float> mDisplayBuf;`. Reserve in the shim's `prepare`-equivalent: `mDisplayBuf.assign(kDisplaySize, 0.f);` where `kDisplaySize = 128` (waveform size 2048 / 16).
-- `extern "C"` exports:
-  - `float* synth_display_buf_ptr()` — returns `mDisplayBuf.data()`.
-  - `int synth_display_buf_size()` — returns `(int)mDisplayBuf.size()`.
-  - `void synth_fill_display_buf()` — calls `mWavetable.fillDisplayBuffer(mDisplayBuf.data(), (int)mDisplayBuf.size())`.
-- Add the three function names to the `EXPORTED_FUNCTIONS` list in `ENGINE/SYNTH/CMakeLists.txt` (`_synth_display_buf_ptr`, `_synth_display_buf_size`, `_synth_fill_display_buf` — leading underscore is the emscripten convention).
-- **CONVENTION NOTES:** Standalone wasm + `EXPORTED_FUNCTIONS` is how we keep emcc from dead-stripping these symbols (they have no JS-glue caller). The leading underscore is the C-name-mangling artifact emscripten expects.
-- `python SCRIPTS/build_synth.py` succeeds.
+### [x] 2. Shim — display buffer storage + exports (SYNTH module)
+- **LANDED IN:** `ENGINE/SYNTH/synth.cpp`, `ENGINE/SYNTH/CMakeLists.txt`. Single-file shim (no separate header / `synth_c_api.cpp`); members + exports added inline.
+- Added member: `std::vector<float> mDisplayBuf;` + `kDisplaySize = 128`. `prepare()` calls `mDisplayBuf.assign(kDisplaySize, 0.f);`.
+- Exports: `synth_display_buf_ptr`, `synth_display_buf_size`, `synth_fill_display_buf` — wired into `EXPORTED_FUNCTIONS`. Build green, `PUBLIC/synth.wasm` rebuilt.
+- **NOTE:** SYNTH has no wave-pos UI driver; this shim is dormant until a `synth_set_wave_pos` export + slider is added in a future increment, OR the work is mirrored to pulsar (see below).
 
-### [ ] 3. Worklet — handle fill message
-- **FILES CHANGING:** `PUBLIC/synth-worklet.js`.
-- **WHY:** Worklet is the only thing that can call wasm exports (it owns the instance).
-- On `port.onmessage` with `{type: 'fillDisplay'}`:
-  - Call `instance.exports.synth_fill_display_buf()`.
-  - Read pointer + size: `const ptr = instance.exports.synth_display_buf_ptr();` `const n = instance.exports.synth_display_buf_size();`
-  - Construct view: `new Float32Array(instance.exports.memory.buffer, ptr, n)`.
-  - Copy to a transferable: `const copy = new Float32Array(view);`
-  - `this.port.postMessage({type: 'displayBuffer', samples: copy}, [copy.buffer]);`
-- **CONVENTION NOTES:** Transferable arrays move ownership rather than copy across the worklet boundary — cheap. We make ONE allocation per fill on the worklet side (the `copy`), which is fine: this runs at human-display rate, not audio rate.
+### [x] 3. Worklet — handle fill message (SYNTH module)
+- **LANDED IN:** `PUBLIC/synth-worklet.js` — `fillDisplay` case added. Calls export, reconstructs `Float32Array` view over wasm memory, copies to transferable, posts `displayBuffer`.
+
+---
+
+## Mid-plan correction (2026-05-20)
+
+Original plan increment 4 named `rd-pulsar.js` as host element — correct, since wave-pos UI lives in pulsar (not synth). But:
+- `PulsarTrain` owns its `Wavetable` privately (`std::unique_ptr<Wavetable>` in `SUBMODULES/RD_DSP/SOURCE/PULSAR/PulsarTrain.h:63`) with no public accessor.
+- WEB_SYNTH rule: no edits to RD_DSP source from this repo — submodule pointer bumps only.
+
+So pulsar wiring is **blocked on a new RD_DSP increment**. Increments 2/3 above landed in SYNTH and remain valid (synth shim works, just not yet driven). Real display loop will mirror the same shape into pulsar once RD_DSP exposes its wavetable.
+
+### [ ] 3a. RD_DSP — expose PulsarTrain wavetable (DO IN RD_DSP REPO)
+- **FILES CHANGING:** `SOURCE/PULSAR/PulsarTrain.h`, `.cpp` (in RD_DSP repo).
+- **WHY:** Pulsar shim needs access to the live wavetable to call `fillDisplayBuffer` against its current wave-pos.
+- Add `const Wavetable& getWavetable() const noexcept { return *mWavetable; }` (or equivalent).
+- Bump RD_DSP `VERSION.txt`, tag, push.
+
+### [ ] 3b. WEB_SYNTH — bump RD_DSP submodule pointer
+- `git submodule update --remote SUBMODULES/RD_DSP` then commit.
+
+### [ ] 3c. PULSAR shim — display buffer storage + exports
+- **FILES CHANGING:** `ENGINE/PULSAR/pulsar.cpp`, `ENGINE/PULSAR/CMakeLists.txt`.
+- Mirror synth shim work: `mDisplayBuf` member, `pulsar_display_buf_ptr` / `_size` / `pulsar_fill_display_buf` exports. `fillDisplayBuf()` calls `mTrain.getWavetable().fillDisplayBuffer(...)`.
+- Add three exports to PULSAR `EXPORTED_FUNCTIONS`.
+- `python SCRIPTS/build_synth.py` succeeds (rebuilds pulsar.wasm).
+
+### [ ] 3d. PULSAR worklet — handle fill message
+- **FILES CHANGING:** `PUBLIC/pulsar-worklet.js`. Same `fillDisplay` pattern as `synth-worklet.js`.
 
 ### [ ] 4. Host element — request + paint
-- **FILES CHANGING:** `PUBLIC/rd-pulsar.js` (or whichever element currently owns the wavetable UI — likely the same one that controls wave-pos).
+- **FILES CHANGING:** `PUBLIC/rd-pulsar.js` (host of wave-pos slider) + `index.html` (script tag for `wavetable-display.js`).
 - **WHY:** Drive the request from the consumer of the wave-pos control.
 - On wave-pos change (existing event/handler):
   - Set a `dirty` flag.

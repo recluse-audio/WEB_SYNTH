@@ -37,6 +37,16 @@ class SynthProcessor extends AudioWorkletProcessor
             if (!this.exports) return;
             this.exports.synth_stop();
         }
+        else if (msg.type === 'fillDisplay')
+        {
+            if (!this.exports) return;
+            this.exports.synth_fill_display_buf();
+            const ptr  = this.exports.synth_display_buf_ptr();
+            const n    = this.exports.synth_display_buf_size();
+            const view = new Float32Array(this.exports.memory.buffer, ptr, n);
+            const copy = new Float32Array(view);
+            this.port.postMessage({ type: 'displayBuffer', samples: copy }, [copy.buffer]);
+        }
     }
 
     process(inputs, outputs, params)
