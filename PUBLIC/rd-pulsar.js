@@ -64,8 +64,7 @@ export class RdPulsar extends HTMLElement
                 formant-min="150"    formant-max="2000"  formant-unit="Hz"
                 wave-pos-min="0"     wave-pos-max="1"    wave-pos-unit=""
                 gain-min="0"         gain-max="1"        gain-unit="">
-            </recluse-pulsar-synth>
-            <recluse-wavetable-display style="display:block; width:320px; height:120px;"></recluse-wavetable-display>`;
+            </recluse-pulsar-synth>`;
     }
 
     set audioContext(ctx)
@@ -123,8 +122,8 @@ export class RdPulsar extends HTMLElement
 
     _onDisplayBuffer(samples)
     {
-        const el = this.shadowRoot.querySelector('recluse-wavetable-display');
-        if (el) el.samples = samples;
+        const ui = this.shadowRoot.querySelector('recluse-pulsar-synth');
+        if (ui) ui.samples = samples;
     }
 
     async _ensureNode()

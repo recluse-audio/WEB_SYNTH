@@ -98,7 +98,7 @@ So pulsar wiring is **blocked on a new RD_DSP increment**. Increments 2/3 above 
 - Add `<recluse-wavetable-display>` to the shadow DOM template alongside the existing controls.
 - Import the bundle: `<script type="module" src="SUBMODULES/RECLUSE_UI/dist/wavetable-display.js"></script>` in `index.html` (or `import` from inside the host element if already module-loading siblings).
 
-### [ ] 5. End-to-end manual test
+### [x] 5. End-to-end manual test
 - **FILES CHANGING:** none.
 - **WHY:** Confirm the loop closes.
 - `python SCRIPTS/build_synth.py`, serve `PUBLIC/`, open the page.
