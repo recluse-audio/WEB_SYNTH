@@ -54,15 +54,18 @@ export class RdPulsar extends HTMLElement
     constructor()
     {
         super();
-        this._ctx  = null;
-        this._node = null;
+        this._ctx           = null;
+        this._node          = null;
+        this._displayDirty  = false;
+        this._rafId         = 0;
         this.attachShadow({ mode: 'open' }).innerHTML = `
             <recluse-pulsar-synth
                 emission-min="0.125" emission-max="150"  emission-unit="Hz"
                 formant-min="150"    formant-max="2000"  formant-unit="Hz"
                 wave-pos-min="0"     wave-pos-max="1"    wave-pos-unit=""
                 gain-min="0"         gain-max="1"        gain-unit="">
-            </recluse-pulsar-synth>`;
+            </recluse-pulsar-synth>
+            <recluse-wavetable-display style="display:block; width:320px; height:120px;"></recluse-wavetable-display>`;
     }
 
     set audioContext(ctx)
@@ -99,7 +102,29 @@ export class RdPulsar extends HTMLElement
             const r = PARAM_RANGES[param];
             if (!r) return;
             this._node.port.postMessage({ type: r.type, value: denormalize(value, r.min, r.max) });
+
+            if (param === 'wavePos') this._requestDisplayFill();
         });
+    }
+
+    _requestDisplayFill()
+    {
+        if (!this._node) return;
+        this._displayDirty = true;
+        if (this._rafId) return;
+        this._rafId = requestAnimationFrame(() =>
+        {
+            this._rafId = 0;
+            if (!this._displayDirty || !this._node) return;
+            this._displayDirty = false;
+            this._node.port.postMessage({ type: 'fillDisplay' });
+        });
+    }
+
+    _onDisplayBuffer(samples)
+    {
+        const el = this.shadowRoot.querySelector('recluse-wavetable-display');
+        if (el) el.samples = samples;
     }
 
     async _ensureNode()
@@ -113,6 +138,15 @@ export class RdPulsar extends HTMLElement
 
         this._node = new AudioWorkletNode(this._ctx, 'pulsar');
         this._node.connect(this._ctx.destination);
+
+        // Persistent listener — survives past the ready handshake.
+        this._node.port.addEventListener('message', (e) =>
+        {
+            if (e.data && e.data.type === 'displayBuffer')
+            {
+                this._onDisplayBuffer(e.data.samples);
+            }
+        });
 
         // Worklet posts {type:'ready'} once wasm is instantiated and prepared.
         const ready = new Promise((resolve) =>
@@ -141,6 +175,9 @@ export class RdPulsar extends HTMLElement
             const n = +ui[param];
             this._node.port.postMessage({ type: r.type, value: denormalize(n, r.min, r.max) });
         }
+
+        // Initial display fill so the element renders even before user touches wave-pos.
+        this._requestDisplayFill();
     }
 }
 

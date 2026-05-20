@@ -75,7 +75,7 @@ Notes:
 
 Discovered during WEB_SYNTH integration: `PulsarTrain` owns `std::unique_ptr<Wavetable> mWavetable` privately with no public read accessor. WEB_SYNTH cannot call `fillDisplayBuffer` on the live (wave-pos driven) pulsar wavetable without one. SYNTH module exposes its Wavetable directly so this only affects pulsar.
 
-### [ ] 6. Expose `PulsarTrain::getWavetable() const`
+### [x] 6. Expose `PulsarTrain::getWavetable() const`
 - **FILES CHANGING:** `SOURCE/PULSAR/PulsarTrain.h` (decl), optionally `.cpp` if defined out-of-line.
 - **WHY:** Give consumers a `const` handle to the live wavetable so they can call read-only methods (`fillDisplayBuffer`, sample count queries) without duplicating wave-pos state.
 - **API:**

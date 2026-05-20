@@ -73,19 +73,19 @@ So pulsar wiring is **blocked on a new RD_DSP increment**. Increments 2/3 above 
 - Add `const Wavetable& getWavetable() const noexcept { return *mWavetable; }` (or equivalent).
 - Bump RD_DSP `VERSION.txt`, tag, push.
 
-### [ ] 3b. WEB_SYNTH — bump RD_DSP submodule pointer
-- `git submodule update --remote SUBMODULES/RD_DSP` then commit.
+### [x] 3b. WEB_SYNTH — bump RD_DSP submodule pointer
+- Done in commit `4b8ec24`. Pointer now at `070f0e4` (contains `PulsarTrain::getWavetable()`).
 
-### [ ] 3c. PULSAR shim — display buffer storage + exports
+### [x] 3c. PULSAR shim — display buffer storage + exports
 - **FILES CHANGING:** `ENGINE/PULSAR/pulsar.cpp`, `ENGINE/PULSAR/CMakeLists.txt`.
 - Mirror synth shim work: `mDisplayBuf` member, `pulsar_display_buf_ptr` / `_size` / `pulsar_fill_display_buf` exports. `fillDisplayBuf()` calls `mTrain.getWavetable().fillDisplayBuffer(...)`.
 - Add three exports to PULSAR `EXPORTED_FUNCTIONS`.
 - `python SCRIPTS/build_synth.py` succeeds (rebuilds pulsar.wasm).
 
-### [ ] 3d. PULSAR worklet — handle fill message
+### [x] 3d. PULSAR worklet — handle fill message
 - **FILES CHANGING:** `PUBLIC/pulsar-worklet.js`. Same `fillDisplay` pattern as `synth-worklet.js`.
 
-### [ ] 4. Host element — request + paint
+### [x] 4. Host element — request + paint
 - **FILES CHANGING:** `PUBLIC/rd-pulsar.js` (host of wave-pos slider) + `index.html` (script tag for `wavetable-display.js`).
 - **WHY:** Drive the request from the consumer of the wave-pos control.
 - On wave-pos change (existing event/handler):

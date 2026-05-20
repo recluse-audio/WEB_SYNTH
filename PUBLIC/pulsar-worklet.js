@@ -53,6 +53,16 @@ class PulsarProcessor extends AudioWorkletProcessor
             if (!this.exports) return;
             this.exports.pulsar_stop();
         }
+        else if (msg.type === 'fillDisplay')
+        {
+            if (!this.exports) return;
+            this.exports.pulsar_fill_display_buf();
+            const ptr  = this.exports.pulsar_display_buf_ptr();
+            const n    = this.exports.pulsar_display_buf_size();
+            const view = new Float32Array(this.exports.memory.buffer, ptr, n);
+            const copy = new Float32Array(view);
+            this.port.postMessage({ type: 'displayBuffer', samples: copy }, [copy.buffer]);
+        }
     }
 
     process(inputs, outputs, params)

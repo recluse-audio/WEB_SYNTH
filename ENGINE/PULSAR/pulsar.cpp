@@ -7,16 +7,21 @@
 // fillWithBasicShapes — no CSV load needed; wave_position interpolates across them.
 
 #include "PULSAR/PulsarTrain.h"
+#include "WAVEFORM/Wavetable.h"
+
+#include <vector>
 
 class PulsarProcessor
 {
 public:
-    static constexpr int kBlockSize = 128;
+    static constexpr int kBlockSize   = 128;
+    static constexpr int kDisplaySize = 128;
 
     void prepare(double sampleRate)
     {
         mTrain.prepare(sampleRate, kBlockSize);
         mGain = 0.3f;
+        mDisplayBuf.assign(kDisplaySize, 0.f);
     }
 
     void setEmissionRate(float hz)   { mTrain.setEmissionRate(hz); }
@@ -25,6 +30,10 @@ public:
     void setGain(float g)            { mGain = g; }
     void start()                     { mTrain.start(); }
     void stop()                      { mTrain.stop(); }
+
+    float* displayBufPtr()        { return mDisplayBuf.data(); }
+    int    displayBufSize() const { return (int)mDisplayBuf.size(); }
+    void   fillDisplayBuf()       { mTrain.getWavetable().fillDisplayBuffer(mDisplayBuf.data(), (int)mDisplayBuf.size()); }
 
     void process(float* out)
     {
@@ -39,7 +48,8 @@ public:
 
 private:
     rd_dsp::PulsarTrain mTrain;
-    float mGain = 0.3f;
+    float               mGain = 0.3f;
+    std::vector<float>  mDisplayBuf;
 };
 
 static PulsarProcessor gPulsar;
@@ -54,3 +64,6 @@ extern "C" void   pulsar_start()                       { gPulsar.start(); }
 extern "C" void   pulsar_stop()                        { gPulsar.stop(); }
 extern "C" void   pulsar_process()                     { gPulsar.process(gOutBuf); }
 extern "C" float* pulsar_get_output_buf()              { return gOutBuf; }
+extern "C" float* pulsar_display_buf_ptr()             { return gPulsar.displayBufPtr(); }
+extern "C" int    pulsar_display_buf_size()            { return gPulsar.displayBufSize(); }
+extern "C" void   pulsar_fill_display_buf()            { gPulsar.fillDisplayBuf(); }
