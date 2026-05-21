@@ -6,11 +6,6 @@ class PulsarProcessor extends AudioWorkletProcessor
         super();
         this.exports = null;
         this.view = null;
-        // Min-flash hold: latch display-on for >=1/15 s after activity so each
-        // emission produces a visible, synchronous flash. Sampled per block
-        // (audio thread) since the DSP active window is sub-frame-short.
-        this.minFlashSamples = Math.round(sampleRate / 15);
-        this.displayHold = 0;
         this.port.onmessage = (e) => this._onMessage(e.data);
     }
 
@@ -70,7 +65,11 @@ class PulsarProcessor extends AudioWorkletProcessor
         }
         else if (msg.type === 'queryActive')
         {
-            this.port.postMessage({ type: 'active', on: this.displayHold > 0 });
+            if (!this.exports) return;
+            // Consume the report-once latch at poll rate. No hold — each poll
+            // reflects only "did a pulsar fire since last poll". Free to alias.
+            const fired = this.exports.pulsar_consume_flash() !== 0;
+            this.port.postMessage({ type: 'active', on: fired });
         }
     }
 
@@ -86,13 +85,6 @@ class PulsarProcessor extends AudioWorkletProcessor
 
         this.exports.pulsar_process();
         out.set(this.view);
-
-        // Consume one flash-event per emitted pulsar; latch the min-flash hold.
-        // consume clears the latch, so call exactly once per block.
-        if (this.exports.pulsar_consume_flash() !== 0)
-            this.displayHold = this.minFlashSamples;
-        else if (this.displayHold > 0)
-            this.displayHold -= out.length;
 
         return true;
     }
