@@ -6,7 +6,31 @@
 
 **On first turn:** create `.claude/PULSAR_ACTIVITY_FLASH_PLAN/` in this repo and copy this file there as `RD_DSP_plan.md`. Update checkboxes in that copy as increments land.
 
-**STATUS (2026-05-21): COMPLETE.** All increments landed. Submodule pointer in WEB_SYNTH at `3aa18c5` ("pulsar and pulsar train report active status"). `VERSION.txt` = 0.0.4. No git tag cut — versioning tracked via `VERSION.txt` bump (see increment 5 note).
+**STATUS (2026-05-21): REWORK IN PROGRESS.** Increments 1-5 (the `isActive()` accessor) landed at `3aa18c5`, `VERSION.txt` 0.0.4. But manual test showed `isActive()` is unusable for the flash — see REWORK below. `isActive()` stays (harmless), but the flash now uses a per-emission report-once latch (increments 6-8).
+
+## REWORK (2026-05-21) — report-once latch
+
+**Why `isActive()` failed:** It reflects the duty-cycle window (`mIsActive` true for exactly one formant period per emission ≈ 2.3 ms at 440 Hz). That window is shorter than any GUI poll interval, so polling a *level* aliases — random catches, non-synchronous flicker. A min-flash hold on the JS side papered over it but still depends on catching the brief window.
+
+**Fix:** Track emission as a discrete *event*, latched until the consumer draws it once. Lives in `PulsarTrain` because `_emitPulsar()` is the only place that sees a new pulsar fire.
+
+```cpp
+// PulsarTrain.h — new member
+std::atomic<bool> mPulsarReportedToGUI { true };  // true = current pulsar already drawn
+
+// PulsarTrain.h/.cpp — new public accessor
+bool consumePulsarFlash() noexcept
+{
+    // Returns true exactly once per emitted pulsar, then false until next emit.
+    // exchange = atomic read-modify-write: store true, return previous value.
+    return ! mPulsarReportedToGUI.exchange (true, std::memory_order_relaxed);
+}
+
+// PulsarTrain.cpp _emitPulsar() — mark the fresh pulsar undrawn
+mPulsarReportedToGUI.store (false, std::memory_order_relaxed);
+```
+
+Guarantees one flash per pulsar regardless of poll timing or duty cycle. No emission missed — flag persists from emit until consumed.
 
 ## Goal
 
@@ -75,6 +99,29 @@ std::atomic<bool> mIsActive { false };  // was: bool mIsActive = false;
 - **FILES CHANGING:** `VERSION.txt` → 0.0.4.
 - **WHY:** WEB_SYNTH bumps the submodule pointer; version bump makes the contract explicit.
 - **DONE:** `VERSION.txt` at 0.0.4. No git tag cut — repo tracks version via `VERSION.txt`, not annotated tags. WEB_SYNTH pins commit `3aa18c5` directly.
+
+### [ ] 6. Failing Catch2 test for report-once latch
+- **FILES CHANGING:** `TESTS/PULSAR/test_PulsarTrain_flash.cpp` (new) or extend existing PulsarTrain test.
+- **WHY:** Lock the consume contract before adding state.
+- Test cases (tag `[PulsarTrain]` or `[PulsarFlash]`):
+  - Freshly constructed / before any emission → `consumePulsarFlash() == false`.
+  - `prepare`, `start`, advance `process()` until the first emission fires → next `consumePulsarFlash() == true`.
+  - Immediately call again without advancing → `consumePulsarFlash() == false` (consumed once).
+  - Advance past one more emission period → `consumePulsarFlash() == true` again.
+- Add the minimum decl/body (`return false;`) so it compiles and fails at the assertion (real RED, not compile-fail).
+
+### [ ] 7. Implement the latch
+- **FILES CHANGING:** `SOURCE/PULSAR/PulsarTrain.h`, `SOURCE/PULSAR/PulsarTrain.cpp`.
+- **WHY:** The actual report-once mechanism.
+- Add member `std::atomic<bool> mPulsarReportedToGUI { true };`.
+- In `_emitPulsar()`: `mPulsarReportedToGUI.store (false, std::memory_order_relaxed);` (after `mPulsar->emit(...)` is fine — order vs. emit doesn't matter, same thread).
+- Add `bool consumePulsarFlash() noexcept { return ! mPulsarReportedToGUI.exchange (true, std::memory_order_relaxed); }`.
+- **CONVENTION NOTES:** `exchange` is the lock-free single-consumer "take and clear" idiom. Producer (audio thread `_emitPulsar`) and consumer (also audio thread, via WEB_SYNTH worklet `process()`) are the same thread in practice, but the atomic keeps it correct even if a future consumer reads from another thread.
+- Tests from increment 6 go GREEN.
+
+### [ ] 8. Version bump
+- **FILES CHANGING:** `VERSION.txt` → 0.0.5.
+- **WHY:** New public API surface (`consumePulsarFlash`). WEB_SYNTH pins the new commit.
 
 ## Out of scope
 

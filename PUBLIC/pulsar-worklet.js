@@ -6,6 +6,11 @@ class PulsarProcessor extends AudioWorkletProcessor
         super();
         this.exports = null;
         this.view = null;
+        // Min-flash hold: latch display-on for >=1/15 s after activity so each
+        // emission produces a visible, synchronous flash. Sampled per block
+        // (audio thread) since the DSP active window is sub-frame-short.
+        this.minFlashSamples = Math.round(sampleRate / 15);
+        this.displayHold = 0;
         this.port.onmessage = (e) => this._onMessage(e.data);
     }
 
@@ -65,9 +70,7 @@ class PulsarProcessor extends AudioWorkletProcessor
         }
         else if (msg.type === 'queryActive')
         {
-            if (!this.exports) return;
-            const on = this.exports.pulsar_is_active() !== 0;
-            this.port.postMessage({ type: 'active', on });
+            this.port.postMessage({ type: 'active', on: this.displayHold > 0 });
         }
     }
 
@@ -83,6 +86,13 @@ class PulsarProcessor extends AudioWorkletProcessor
 
         this.exports.pulsar_process();
         out.set(this.view);
+
+        // Latch min-flash hold on activity; decrement per block otherwise.
+        if (this.exports.pulsar_is_active() !== 0)
+            this.displayHold = this.minFlashSamples;
+        else if (this.displayHold > 0)
+            this.displayHold -= out.length;
+
         return true;
     }
 }

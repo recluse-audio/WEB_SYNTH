@@ -8,15 +8,24 @@ Paste the block below as your first message in a Claude Code session opened **in
 
 I am working on a cross-repo feature called **Pulsar Activity Flash**. Three repos are involved: `RD_DSP` (this one), `WEB_SYNTH`, and `RECLUSE_UI`. The integrator is WEB_SYNTH; you are working in RD_DSP and should not assume any knowledge of the other two beyond what is needed for the public API.
 
-**Feature goal (full context):** The browser-side wavetable display in WEB_SYNTH needs to dim/flash on/off in sync with the pulsar's per-emission activity (`rd_dsp::Pulsar::mIsActive`). The browser GUI thread will poll a C-ABI export via `requestAnimationFrame` at ~60 Hz. To make that read thread-safe and to give consumers a clean accessor, RD_DSP needs to:
+**This is a REWORK.** An earlier round added `Pulsar::isActive()` / `PulsarTrain::isActive()` (landed at commit `3aa18c5`, `VERSION.txt` 0.0.4). That accessor stays — but it turned out unusable for the flash feature. `isActive()` is true for only one formant period per emission (≈ 2.3 ms at 440 Hz), shorter than any GUI poll interval, so polling it aliases into random catches and non-synchronous flicker. We are switching the flash to a per-emission **report-once latch** that draws each emitted pulsar exactly once, decoupled from the duty cycle.
 
-1. Promote `Pulsar::mIsActive` from plain `bool` to `std::atomic<bool>`.
-2. Add `bool Pulsar::isActive() const noexcept`.
-3. Add `bool PulsarTrain::isActive() const noexcept` as a pass-through.
-4. Catch2 coverage of the transition.
-5. Bump `VERSION.txt`, tag.
+**What to add (all in `PulsarTrain`, since `_emitPulsar()` is the only place a new pulsar fires):**
 
-Audio thread continues to write the flag exactly as it does today — only the storage type changes (and the field name stays `mIsActive`). The single atomic write per state change costs nothing measurable on x86/ARM.
+1. New member: `std::atomic<bool> mPulsarReportedToGUI { true };` (true = current pulsar already drawn).
+2. In `_emitPulsar()`: `mPulsarReportedToGUI.store (false, std::memory_order_relaxed);` — a fresh pulsar is undrawn.
+3. New public accessor:
+   ```cpp
+   bool consumePulsarFlash() noexcept
+   {
+       // true exactly once per emitted pulsar, then false until next emit.
+       return ! mPulsarReportedToGUI.exchange (true, std::memory_order_relaxed);
+   }
+   ```
+4. Catch2 coverage of the consume contract (true once after an emission, false on the immediate second call, true again after the next emission period).
+5. Bump `VERSION.txt` → 0.0.5.
+
+`exchange(true)` is the lock-free "take and clear" idiom: store `true`, return the previous value. Producer (`_emitPulsar`) and consumer (WEB_SYNTH worklet calling `consumePulsarFlash()` once per audio block) are the same thread in practice; the atomic keeps it correct regardless.
 
 **Mode:** `incremental_educational`. One increment per turn, plan-first, real RED state (assertion failure, not compile failure).
 
@@ -24,11 +33,12 @@ Audio thread continues to write the flag exactly as it does today — only the s
 
 1. Read `WEB_SYNTH`'s tracked plan file at this absolute path:
    `C:\REPOS\PROJECTS\WEB_SYNTH\.claude\PULSAR_ACTIVITY_FLASH_PLAN\RD_DSP_plan.md`
+   The **REWORK** section + increments 6-8 are the live work. Increments 1-5 are done (`isActive()`); do not redo them.
    (You have read permission on `C:\REPOS\PROJECTS\WEB_SYNTH` via standing external-source rules — confirm by reading.)
 2. Read the cross-repo README in the same folder for context:
    `C:\REPOS\PROJECTS\WEB_SYNTH\.claude\PULSAR_ACTIVITY_FLASH_PLAN\README.md`
-3. Create `.claude/PULSAR_ACTIVITY_FLASH_PLAN/` in **this** repo and copy `RD_DSP_plan.md` there as the local tracked copy. Update its checkboxes as increments land. Do not edit the WEB_SYNTH copy from here.
-4. Confirm you have read both files, then ask me one question: which increment to start. Default suggestion: increment 1 (failing Catch2 test).
+3. If `.claude/PULSAR_ACTIVITY_FLASH_PLAN/RD_DSP_plan.md` already exists in **this** repo from the earlier round, refresh it from the WEB_SYNTH copy (it carries the REWORK section). Otherwise create it. Update its checkboxes as increments land. Do not edit the WEB_SYNTH copy from here.
+4. Confirm you have read both files, then ask me one question: which increment to start. Default suggestion: increment 6 (failing Catch2 test for the latch).
 
 **Hard rules reminder (RD_DSP):**
 
