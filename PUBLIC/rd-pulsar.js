@@ -58,6 +58,10 @@ export class RdPulsar extends HTMLElement
         this._node          = null;
         this._displayDirty  = false;
         this._rafId         = 0;
+        this._activeRafId   = 0;
+        this._lastActiveOn  = null;
+        this._lastPaintAt   = 0;
+        this._emissionRate  = PARAM_RANGES.emission.min;
         this.attachShadow({ mode: 'open' }).innerHTML = `
             <recluse-pulsar-synth
                 emission-min="0.125" emission-max="150"  emission-unit="Hz"
@@ -100,8 +104,10 @@ export class RdPulsar extends HTMLElement
             const { param, value } = e.detail;
             const r = PARAM_RANGES[param];
             if (!r) return;
-            this._node.port.postMessage({ type: r.type, value: denormalize(value, r.min, r.max) });
+            const real = denormalize(value, r.min, r.max);
+            this._node.port.postMessage({ type: r.type, value: real });
 
+            if (param === 'emission') this._emissionRate = real;
             if (param === 'wavePos') this._requestDisplayFill();
         });
     }
@@ -126,6 +132,44 @@ export class RdPulsar extends HTMLElement
         if (ui) ui.samples = samples;
     }
 
+    _startActivePolling()
+    {
+        if (this._activeRafId) return;
+
+        const tick = (now) =>
+        {
+            this._activeRafId = requestAnimationFrame(tick);
+            if (!this._node) return;
+
+            // When emission > 30 Hz, cap repaints at 25 Hz (40 ms guard).
+            // Below that, query every frame (display-refresh limited).
+            const cap = this._emissionRate > 30 ? 40 : 0;
+            if (cap > 0 && (now - this._lastPaintAt) < cap) return;
+
+            this._node.port.postMessage({ type: 'queryActive' });
+        };
+
+        this._activeRafId = requestAnimationFrame(tick);
+    }
+
+    _onActive(on)
+    {
+        if (on === this._lastActiveOn) return;
+        this._lastActiveOn = on;
+        this._lastPaintAt  = performance.now();
+        const ui = this.shadowRoot.querySelector('recluse-pulsar-synth');
+        if (ui) ui.active = on;
+    }
+
+    disconnectedCallback()
+    {
+        if (this._activeRafId)
+        {
+            cancelAnimationFrame(this._activeRafId);
+            this._activeRafId = 0;
+        }
+    }
+
     async _ensureNode()
     {
         if (this._node) return;
@@ -141,9 +185,14 @@ export class RdPulsar extends HTMLElement
         // Persistent listener — survives past the ready handshake.
         this._node.port.addEventListener('message', (e) =>
         {
-            if (e.data && e.data.type === 'displayBuffer')
+            if (!e.data) return;
+            if (e.data.type === 'displayBuffer')
             {
                 this._onDisplayBuffer(e.data.samples);
+            }
+            else if (e.data.type === 'active')
+            {
+                this._onActive(e.data.on);
             }
         });
 
@@ -177,6 +226,9 @@ export class RdPulsar extends HTMLElement
 
         // Initial display fill so the element renders even before user touches wave-pos.
         this._requestDisplayFill();
+
+        // Start polling pulsar activity for the flash-on/off display state.
+        this._startActivePolling();
     }
 }
 

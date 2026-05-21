@@ -63,6 +63,12 @@ class PulsarProcessor extends AudioWorkletProcessor
             const copy = new Float32Array(view);
             this.port.postMessage({ type: 'displayBuffer', samples: copy }, [copy.buffer]);
         }
+        else if (msg.type === 'queryActive')
+        {
+            if (!this.exports) return;
+            const on = this.exports.pulsar_is_active() !== 0;
+            this.port.postMessage({ type: 'active', on });
+        }
     }
 
     process(inputs, outputs, params)

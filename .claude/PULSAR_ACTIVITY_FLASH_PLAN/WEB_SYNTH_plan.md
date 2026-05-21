@@ -12,7 +12,7 @@ Bridge `rd_dsp::PulsarTrain::isActive()` from the wasm to a boolean `active` pro
 
 ## Preconditions
 
-- [ ] RD_DSP plan increment 5 landed (`PulsarTrain::isActive()` exposed and tagged).
+- [x] RD_DSP plan complete (`PulsarTrain::isActive()` + `Pulsar::isActive()` exposed). Submodule pointer already at `3aa18c5`, VERSION 0.0.4.
 - [ ] RECLUSE_UI plan landed (display element accepts `active` prop, pulsar-synth passes it through).
 
 If either is `[ ]`, this plan stops at increment 0 and waits.
@@ -41,44 +41,25 @@ If either is `[ ]`, this plan stops at increment 0 and waits.
 
 ## Increments
 
-### [ ] 0. Confirm preconditions, bump submodule pointers
-- **FILES CHANGING:** `SUBMODULES/RD_DSP` (pointer), `PUBLIC/SUBMODULES/RECLUSE_UI` (pointer), commit message.
+### [~] 0. Confirm preconditions, bump submodule pointers
+- **FILES CHANGING:** `SUBMODULES/RD_DSP` (pointer — DONE), `PUBLIC/SUBMODULES/RECLUSE_UI` (pointer — pending), commit message.
 - **WHY:** Block on RD_DSP + RECLUSE_UI deliverables before touching shim code.
-- `git submodule update --remote SUBMODULES/RD_DSP`
-- `git submodule update --remote PUBLIC/SUBMODULES/RECLUSE_UI`
-- Verify the new commits contain `PulsarTrain::isActive()` and `<recluse-wavetable-display>` `active` prop respectively.
-- Commit pointer bumps with a clear message referencing both plans.
+- **RD_DSP:** pointer already at `3aa18c5`; `PulsarTrain::isActive()` confirmed present (`SOURCE/PULSAR/PulsarTrain.cpp:162`). No further bump needed.
+- **RECLUSE_UI:** still pending — `git submodule update --remote PUBLIC/SUBMODULES/RECLUSE_UI` once its plan lands.
+- Commit pointer bump(s) with a clear message referencing both plans.
 
-### [ ] 1. PULSAR shim — `pulsar_is_active` export
-- **FILES CHANGING:** `ENGINE/PULSAR/pulsar.cpp`, `ENGINE/PULSAR/CMakeLists.txt`.
-- **WHY:** Surface the DSP flag to JS.
-- Add free function near other `extern "C"` exports:
-  ```cpp
-  extern "C" EMSCRIPTEN_KEEPALIVE
-  int pulsar_is_active()
-  {
-      return g_pulsar && g_pulsar->mTrain.isActive() ? 1 : 0;
-  }
-  ```
-  (Exact symbol shape matches existing pattern in `pulsar.cpp`; field name `mTrain` to confirm against file.)
-- Add `_pulsar_is_active` to `EXPORTED_FUNCTIONS` in `ENGINE/PULSAR/CMakeLists.txt`.
-- `python SCRIPTS/build_synth.py` succeeds; rebuilds `PUBLIC/pulsar.wasm`.
+### [x] 1. PULSAR shim — `pulsar_is_active` export
+- **LANDED:** `ENGINE/PULSAR/pulsar.cpp` — `PulsarProcessor::isActive()` (returns `mTrain.isActive() ? 1 : 0`) + `extern "C" int pulsar_is_active()`. `ENGINE/PULSAR/CMakeLists.txt` — `_pulsar_is_active` appended to `EXPORTED_FUNCTIONS`.
+- Module exports via explicit `EXPORTED_FUNCTIONS` list, not `EMSCRIPTEN_KEEPALIVE` (original plan snippet was wrong on that detail; matched actual file convention).
+- `python SCRIPTS/build_synth.py` green; `PUBLIC/pulsar.wasm` rebuilt.
 
-### [ ] 2. PULSAR worklet — answer `queryActive` messages
-- **FILES CHANGING:** `PUBLIC/pulsar-worklet.js`.
-- **WHY:** Worklet owns the wasm instance; only it can call exports. Main thread asks via MessagePort.
-- In the existing `port.onmessage` handler, add a case:
-  ```js
-  case 'queryActive':
-  {
-      const on = !!instance.exports.pulsar_is_active();
-      port.postMessage({ type: 'active', on });
-      break;
-  }
-  ```
-- No audio-thread work added inside `process()`. The query handler runs on the worklet's task loop, not in the audio render callback.
+### [x] 2. PULSAR worklet — answer `queryActive` messages
+- **LANDED:** `PUBLIC/pulsar-worklet.js` — `queryActive` branch in `_onMessage`. Reads `this.exports.pulsar_is_active()`, posts `{type:'active', on}`. (File uses an `if/else if` chain on `msg.type` with `this.exports`, not a `switch`/`instance` — matched actual style.)
+- No work added inside `process()`.
 
-### [ ] 3. `rd-pulsar.js` — requestAnimationFrame poll + throttle + edge detect
+### [x] 3. `rd-pulsar.js` — requestAnimationFrame poll + throttle + edge detect
+**LANDED:** constructor state (`_activeRafId`, `_lastActiveOn`, `_lastPaintAt`, `_emissionRate`); `emission` param caches real Hz; `_startActivePolling()` runs the rAF loop (40 ms cap when emission > 30 Hz, else every frame); `_onActive()` edge-detects + sets `ui.active`; message listener handles `active`; `disconnectedCallback()` cancels the loop. Started at end of `_ensureNode()`.
+
 - **FILES CHANGING:** `PUBLIC/rd-pulsar.js`.
 - **WHY:** Browser-side polling loop. Decides when to ask. Forwards to UI on change.
 - State on the host element:

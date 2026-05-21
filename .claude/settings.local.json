@@ -24,7 +24,8 @@
       "Read(//c/REPOS/**)",
       "Bash(git -C PUBLIC/SUBMODULES/RECLUSE_UI show HEAD~1:dist/knob.js)",
       "Bash(git submodule *)",
-      "Bash(git -C PUBLIC/SUBMODULES/RECLUSE_UI log -3 --oneline)"
+      "Bash(git -C PUBLIC/SUBMODULES/RECLUSE_UI log -3 --oneline)",
+      "Bash(python SCRIPTS/build_synth.py)"
     ]
   }
 }
