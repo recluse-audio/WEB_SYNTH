@@ -25,7 +25,10 @@
       "Bash(git -C PUBLIC/SUBMODULES/RECLUSE_UI show HEAD~1:dist/knob.js)",
       "Bash(git submodule *)",
       "Bash(git -C PUBLIC/SUBMODULES/RECLUSE_UI log -3 --oneline)",
-      "Bash(python SCRIPTS/build_synth.py)"
+      "Bash(python SCRIPTS/build_synth.py)",
+      "Bash(git -C SUBMODULES/RD_DSP fetch --quiet)",
+      "Bash(git -C SUBMODULES/RD_DSP log --oneline -3 origin/main)",
+      "Bash(git -C SUBMODULES/RD_DSP log --oneline -1)"
     ]
   }
 }

@@ -10,7 +10,7 @@ if(EMSCRIPTEN)
     target_link_options(pulsar PRIVATE
         "-sWASM=1"
         "-sSTANDALONE_WASM=1"
-        "-sEXPORTED_FUNCTIONS=[_pulsar_prepare,_pulsar_set_emission_rate,_pulsar_set_formant_freq,_pulsar_set_wave_position,_pulsar_set_gain,_pulsar_start,_pulsar_stop,_pulsar_process,_pulsar_get_output_buf,_pulsar_display_buf_ptr,_pulsar_display_buf_size,_pulsar_fill_display_buf,_pulsar_is_active]"
+        "-sEXPORTED_FUNCTIONS=[_pulsar_prepare,_pulsar_set_emission_rate,_pulsar_set_formant_freq,_pulsar_set_wave_position,_pulsar_set_gain,_pulsar_start,_pulsar_stop,_pulsar_process,_pulsar_get_output_buf,_pulsar_display_buf_ptr,_pulsar_display_buf_size,_pulsar_fill_display_buf,_pulsar_is_active,_pulsar_consume_flash]"
         "--no-entry"
     )
 

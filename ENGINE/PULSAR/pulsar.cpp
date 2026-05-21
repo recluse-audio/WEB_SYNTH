@@ -35,6 +35,7 @@ public:
     int    displayBufSize() const { return (int)mDisplayBuf.size(); }
     void   fillDisplayBuf()       { mTrain.getWavetable().fillDisplayBuffer(mDisplayBuf.data(), (int)mDisplayBuf.size()); }
     int    isActive() const       { return mTrain.isActive() ? 1 : 0; }
+    int    consumeFlash()         { return mTrain.consumePulsarFlash() ? 1 : 0; }
 
     void process(float* out)
     {
@@ -69,3 +70,4 @@ extern "C" float* pulsar_display_buf_ptr()             { return gPulsar.displayB
 extern "C" int    pulsar_display_buf_size()            { return gPulsar.displayBufSize(); }
 extern "C" void   pulsar_fill_display_buf()            { gPulsar.fillDisplayBuf(); }
 extern "C" int    pulsar_is_active()                   { return gPulsar.isActive(); }
+extern "C" int    pulsar_consume_flash()               { return gPulsar.consumeFlash(); }

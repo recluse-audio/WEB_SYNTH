@@ -87,8 +87,9 @@ class PulsarProcessor extends AudioWorkletProcessor
         this.exports.pulsar_process();
         out.set(this.view);
 
-        // Latch min-flash hold on activity; decrement per block otherwise.
-        if (this.exports.pulsar_is_active() !== 0)
+        // Consume one flash-event per emitted pulsar; latch the min-flash hold.
+        // consume clears the latch, so call exactly once per block.
+        if (this.exports.pulsar_consume_flash() !== 0)
             this.displayHold = this.minFlashSamples;
         else if (this.displayHold > 0)
             this.displayHold -= out.length;

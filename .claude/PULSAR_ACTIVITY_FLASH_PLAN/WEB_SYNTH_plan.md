@@ -122,29 +122,15 @@ If either is `[ ]`, this plan stops at increment 0 and waits.
 - **FALLOUT:** emission > 15 Hz re-triggers the hold continuously → display reads steady-on (matches "appears solid at high rate"). 25 Hz redraw cap unchanged.
 - **KNOWN LIMIT:** block-rate detection can still miss the shortest grains (formant ≈ 2 kHz, ~22-sample window) if fully contained mid-block. If that proves visible, escalate to a per-sample "emission fired" latch in RD_DSP. Deferred.
 
-### [ ] 6. Bump RD_DSP submodule pointer to the rework commit
-- **BLOCKED until** RD_DSP increments 6-8 land (`consumePulsarFlash()`, `VERSION.txt` 0.0.5).
-- `git submodule update --remote SUBMODULES/RD_DSP` (or fetch + checkout the new commit), confirm `consumePulsarFlash()` present in `SUBMODULES/RD_DSP/SOURCE/PULSAR/PulsarTrain.h`.
+### [x] 6. Bump RD_DSP submodule pointer to the rework commit
+- **LANDED:** working tree at `a49998f` ("reporting if each pulsar has been reported to ui, rather than if it is currently active"). `consumePulsarFlash()` decl `PulsarTrain.h:64`, body `PulsarTrain.cpp:169`, latch member `PulsarTrain.h:79`. Gitlink to be committed alongside increments 7-8.
 
-### [ ] 7. Shim — `pulsar_consume_flash` export
-- **FILES CHANGING:** `ENGINE/PULSAR/pulsar.cpp`, `ENGINE/PULSAR/CMakeLists.txt`.
-- **WHY:** Expose the latch to the worklet.
-- `pulsar.cpp`: add `int consumeFlash() { return mTrain.consumePulsarFlash() ? 1 : 0; }` on `PulsarProcessor`, and `extern "C" int pulsar_consume_flash() { return gPulsar.consumeFlash(); }`.
-- `CMakeLists.txt`: append `_pulsar_consume_flash` to `EXPORTED_FUNCTIONS`.
-- `python SCRIPTS/build_synth.py` → rebuild `PUBLIC/pulsar.wasm`.
+### [x] 7. Shim — `pulsar_consume_flash` export
+- **LANDED:** `pulsar.cpp` — `PulsarProcessor::consumeFlash()` + `extern "C" int pulsar_consume_flash()`. `CMakeLists.txt` — `_pulsar_consume_flash` appended to `EXPORTED_FUNCTIONS`. Build green; `PUBLIC/pulsar.wasm` rebuilt, symbol verified present.
 
-### [ ] 8. Worklet — consume per block, drop is_active
-- **FILES CHANGING:** `PUBLIC/pulsar-worklet.js`.
-- **WHY:** Latch the min-flash hold off the report-once event instead of the duty-cycle level.
-- In `process()`, swap the activity check:
-  ```js
-  if (this.exports.pulsar_consume_flash() !== 0)
-      this.displayHold = this.minFlashSamples;
-  else if (this.displayHold > 0)
-      this.displayHold -= out.length;
-  ```
-- `queryActive` unchanged (returns `displayHold > 0`). Min-flash hold stays — still needed so a one-block event is visible for ≥1/15 s.
-- Re-test the increment-4 matrix, focus on 2 Hz: each emission now draws once, synchronous.
+### [x] 8. Worklet — consume per block, drop is_active
+- **LANDED:** `PUBLIC/pulsar-worklet.js` `process()` now calls `pulsar_consume_flash()` (was `pulsar_is_active()`). Called exactly once per block (consume clears the latch). `queryActive` unchanged (returns `displayHold > 0`); min-flash hold unchanged. JS-only, no rebuild.
+- **NEXT:** re-test matrix, focus on 2 Hz — each emission should draw once, synchronous.
 
 ### [ ] 5. (Optional) Reduce port traffic
 - **TRIGGER:** Only if 60 Hz port polling shows up in profiling.
