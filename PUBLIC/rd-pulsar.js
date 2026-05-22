@@ -101,10 +101,10 @@ export class RdPulsar extends HTMLElement
         ui.addEventListener('paramchange', (e) =>
         {
             if (!this._node) return;
-            const { param, value } = e.detail;
+            const { param, center } = e.detail;
             const r = PARAM_RANGES[param];
             if (!r) return;
-            const real = denormalize(value, r.min, r.max);
+            const real = denormalize(center, r.min, r.max);
             this._node.port.postMessage({ type: r.type, value: real });
 
             if (param === 'emission') this._emissionRate = real;

@@ -28,7 +28,12 @@
       "Bash(python SCRIPTS/build_synth.py)",
       "Bash(git -C SUBMODULES/RD_DSP fetch --quiet)",
       "Bash(git -C SUBMODULES/RD_DSP log --oneline -3 origin/main)",
-      "Bash(git -C SUBMODULES/RD_DSP log --oneline -1)"
+      "Bash(git -C SUBMODULES/RD_DSP log --oneline -1)",
+      "Bash(git ls-tree *)",
+      "Bash(awk '{print \"committed:\",$3}')",
+      "Bash(git -C PUBLIC/SUBMODULES/RECLUSE_UI rev-parse HEAD)",
+      "Bash(git add *)",
+      "Bash(git diff *)"
     ]
   }
 }
