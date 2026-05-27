@@ -13,14 +13,16 @@ let defaultContext = null;
 const workletLoaded = new WeakMap();
 let wasmBytesPromise = null;
 
-// rangeType / densityType present only for params the DSP can spread
-// stochastically (emission + formant). wavePos + gain are center-only.
+// rangeType / densityType present for every param the DSP spreads stochastically
+// (emission, formant, wavePos, amp). amp = per-pulsar amplitude; the former master
+// "gain" slider was repurposed to drive it. Master gain (mGain in pulsar.cpp) is now
+// a fixed output trim with no UI control.
 const PARAM_RANGES =
 {
     emission: { min: 0.125, max: 150,  type: 'emissionRate', rangeType: 'emissionRange', densityType: 'emissionDensity' },
     formant:  { min: 150,   max: 2000, type: 'formantFreq',  rangeType: 'formantRange',  densityType: 'formantDensity'  },
-    wavePos:  { min: 0,     max: 1,    type: 'wavePos'      },
-    gain:     { min: 0,     max: 1,    type: 'gain'         }
+    wavePos:  { min: 0,     max: 1,    type: 'wavePos',      rangeType: 'wavePosRange',   densityType: 'wavePosDensity'  },
+    amp:      { min: 0,     max: 1,    type: 'amp',          rangeType: 'ampRange',       densityType: 'ampDensity'      }
 };
 
 const denormalize = (n, min, max) => min + n * (max - min);
@@ -69,7 +71,7 @@ export class RdPulsar extends HTMLElement
                 emission-min="0.125" emission-max="150"  emission-unit="Hz"
                 formant-min="150"    formant-max="2000"  formant-unit="Hz"
                 wave-pos-min="0"     wave-pos-max="1"    wave-pos-unit=""
-                gain-min="0"         gain-max="1"        gain-unit="">
+                amp-min="0"          amp-max="1"         amp-unit="">
             </recluse-pulsar-synth>`;
     }
 
@@ -207,6 +209,9 @@ export class RdPulsar extends HTMLElement
             else if (e.data.type === 'active')
             {
                 this._onActive(e.data.on);
+                // Randomized emission can move the wave position; regenerate the
+                // displayed waveform when the worklet reports it changed.
+                if (e.data.wavePosChanged) this._requestDisplayFill();
             }
         });
 
@@ -235,6 +240,10 @@ export class RdPulsar extends HTMLElement
         for (const [param, r] of Object.entries(PARAM_RANGES))
         {
             const n = +ui[param];
+            // Skip params the mounted component doesn't expose (e.g. stale dist
+            // missing a renamed prop). +undefined is NaN — pushing it would set
+            // the DSP param to NaN and silence output. Let the DSP default stand.
+            if (!Number.isFinite(n)) continue;
             this._node.port.postMessage({ type: r.type, value: denormalize(n, r.min, r.max) });
         }
 

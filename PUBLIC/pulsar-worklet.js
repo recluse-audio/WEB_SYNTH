@@ -58,6 +58,31 @@ class PulsarProcessor extends AudioWorkletProcessor
             if (!this.exports) return;
             this.exports.pulsar_set_wave_position(msg.value);
         }
+        else if (msg.type === 'wavePosRange')
+        {
+            if (!this.exports) return;
+            this.exports.pulsar_set_wave_position_range(msg.min, msg.max);
+        }
+        else if (msg.type === 'wavePosDensity')
+        {
+            if (!this.exports) return;
+            this.exports.pulsar_set_wave_position_density(msg.value);
+        }
+        else if (msg.type === 'amp')
+        {
+            if (!this.exports) return;
+            this.exports.pulsar_set_amp(msg.value);
+        }
+        else if (msg.type === 'ampRange')
+        {
+            if (!this.exports) return;
+            this.exports.pulsar_set_amp_range(msg.min, msg.max);
+        }
+        else if (msg.type === 'ampDensity')
+        {
+            if (!this.exports) return;
+            this.exports.pulsar_set_amp_density(msg.value);
+        }
         else if (msg.type === 'gain')
         {
             if (!this.exports) return;
@@ -89,7 +114,10 @@ class PulsarProcessor extends AudioWorkletProcessor
             // Consume the report-once latch at poll rate. No hold — each poll
             // reflects only "did a pulsar fire since last poll". Free to alias.
             const fired = this.exports.pulsar_consume_flash() !== 0;
-            this.port.postMessage({ type: 'active', on: fired });
+            // Same poll also drains the wave-position-changed latch so the GUI
+            // regenerates the displayed waveform when randomized emission moves it.
+            const wavePosChanged = this.exports.pulsar_consume_wave_pos_changed() !== 0;
+            this.port.postMessage({ type: 'active', on: fired, wavePosChanged });
         }
     }
 
