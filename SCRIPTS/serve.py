@@ -16,6 +16,22 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 PUBLIC_DIR = REPO_ROOT / "PUBLIC"
 
 
+class NoCacheHandler(SimpleHTTPRequestHandler):
+    """Dev server: never let the browser cache JS/wasm.
+
+    Without this, a stale rd-pulsar.js or pulsar.wasm survives a normal reload
+    and silently runs against a mismatched build (e.g. an old PARAM_RANGES that
+    reads a renamed prop -> NaN param -> silence). no-store forces a fresh fetch
+    every load so a rebuild is always what runs.
+    """
+
+    def end_headers(self):
+        self.send_header("Cache-Control", "no-store, must-revalidate")
+        self.send_header("Pragma", "no-cache")
+        self.send_header("Expires", "0")
+        super().end_headers()
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--port", type=int, default=8080)
@@ -25,7 +41,7 @@ def main():
         print(f"PUBLIC/ missing: {PUBLIC_DIR}", file=sys.stderr)
         sys.exit(1)
 
-    handler = partial(SimpleHTTPRequestHandler, directory=str(PUBLIC_DIR))
+    handler = partial(NoCacheHandler, directory=str(PUBLIC_DIR))
     httpd = ThreadingHTTPServer(("", args.port), handler)
 
     thread = threading.Thread(target=httpd.serve_forever, daemon=True)
