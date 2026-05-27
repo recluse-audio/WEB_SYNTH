@@ -93,21 +93,20 @@ DSP correctness (density gating, range mapping) is verified by RD_DSP's own Catc
 
 ### WEB_SYNTH increments (after prereq lands + submodule bumped)
 
-**[ ] v2.0 — bump RD_DSP submodule pointer** to the commit exposing the new setters. `git submodule update --remote SUBMODULES/RD_DSP`, then rebuild and sanity-check the new symbols are reachable.
+**[x] v2.0 — bump RD_DSP submodule pointer.** No-op: gitlink already at `9da54b5` ("Interface funcs for pulsar train state") = origin/main. RD_DSP exposed **emission + formant only**: `setEmissionRange/Density`, `setFormantRange/Density` (forward to the embedded `RandomizedParam`). No wavePos/amp spread setters shipped — those params stay center-only on the WEB_SYNTH side. (Gain open question moot for now — no `amp` API.)
 
-**[ ] v2.1 — extend the C-ABI shim** (`ENGINE/PULSAR/pulsar.cpp`).
-- Add `PulsarProcessor` methods + `extern "C"` exports per param for range + density, e.g.:
-  - `pulsar_set_emission_range(float min, float max)`, `pulsar_set_emission_density(float d)`
-  - same for `formant`, `wave_position`, and `amp`/`gain` (see open question).
-- Add each new export to `EXPORTED_FUNCTIONS` in `ENGINE/PULSAR/CMakeLists.txt`.
-- Rebuild: `python SCRIPTS/build_synth.py` → artifact `PUBLIC/pulsar.wasm`. (Confirm the build script targets the PULSAR module / both modules.)
+**[x] v2.1 — extended the C-ABI shim** (`ENGINE/PULSAR/pulsar.cpp` + `CMakeLists.txt`).
+- Added `PulsarProcessor` methods + 4 `extern "C"` exports: `pulsar_set_emission_range(lo,hi)`, `pulsar_set_emission_density(d)`, `pulsar_set_formant_range(lo,hi)`, `pulsar_set_formant_density(d)`.
+- Added all 4 to `EXPORTED_FUNCTIONS` in `ENGINE/PULSAR/CMakeLists.txt`.
+- Rebuilt via `python SCRIPTS/build_pulsar.py` → `PUBLIC/pulsar.wasm` (25489 B). All 4 symbols verified in the binary.
 
-**[ ] v2.2 — forward the spread in the worklet path** (`PUBLIC/rd-pulsar.js` + `PUBLIC/pulsar-worklet.js`).
-- `paramchange` handler: stop dropping `min`/`max`/`density`. Denormalize each (same range table v1 uses for `center`) and `postMessage` them to the worklet alongside center.
-- Worklet `onmessage`: call the new `pulsar_set_*_range` / `pulsar_set_*_density` exports.
-- Keep center pushing through the existing setter (unchanged) so at-rest collapse (min=center=max, density 0) preserves v1 audio exactly.
+**[x] v2.2 — forwarded the spread in the worklet path** (`PUBLIC/rd-pulsar.js` + `PUBLIC/pulsar-worklet.js`).
+- `PARAM_RANGES`: emission/formant entries gained `rangeType`/`densityType`; wavePos/gain left center-only.
+- `paramchange` handler: stops dropping `min`/`max`/`density`. Denormalizes min/max (same range table as center), passes density raw (already 0..1), posts both alongside center — only when `r.rangeType` exists.
+- Worklet `_onMessage`: 4 new branches call the new `pulsar_set_*_range` / `pulsar_set_*_density` exports.
+- Center still pushes through the existing setter unchanged. At-rest collapse (min=center=max, density 0) preserves v1 audio — RD_DSP defaults density 0, so no initial spread push needed.
 
-**[ ] v2.3 — manual test.** Widen a slider's range + raise its density knob → emissions audibly scatter within the band; collapse range → back to steady v1 tone. No NaN, no clicks. Activity flash + wavetable display still work.
+**[ ] v2.3 — manual test (user, in browser).** Serve (`python SCRIPTS/serve.py`), open the page. Widen an emission/formant slider range + raise its density knob → emissions audibly scatter within the band; collapse range or zero density → back to steady v1 tone. wavePos/gain unchanged (center-only). No NaN, no clicks. Activity flash + wavetable display still work.
 
 ### Mapping table (UI param → RD_DSP target)
 

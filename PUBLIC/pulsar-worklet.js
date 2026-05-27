@@ -33,6 +33,26 @@ class PulsarProcessor extends AudioWorkletProcessor
             if (!this.exports) return;
             this.exports.pulsar_set_formant_freq(msg.value);
         }
+        else if (msg.type === 'emissionRange')
+        {
+            if (!this.exports) return;
+            this.exports.pulsar_set_emission_range(msg.min, msg.max);
+        }
+        else if (msg.type === 'emissionDensity')
+        {
+            if (!this.exports) return;
+            this.exports.pulsar_set_emission_density(msg.value);
+        }
+        else if (msg.type === 'formantRange')
+        {
+            if (!this.exports) return;
+            this.exports.pulsar_set_formant_range(msg.min, msg.max);
+        }
+        else if (msg.type === 'formantDensity')
+        {
+            if (!this.exports) return;
+            this.exports.pulsar_set_formant_density(msg.value);
+        }
         else if (msg.type === 'wavePos')
         {
             if (!this.exports) return;

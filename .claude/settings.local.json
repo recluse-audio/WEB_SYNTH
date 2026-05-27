@@ -33,7 +33,8 @@
       "Bash(awk '{print \"committed:\",$3}')",
       "Bash(git -C PUBLIC/SUBMODULES/RECLUSE_UI rev-parse HEAD)",
       "Bash(git add *)",
-      "Bash(git diff *)"
+      "Bash(git diff *)",
+      "Bash(python -c \"import re,sys; d=open\\('PUBLIC/pulsar.wasm','rb'\\).read\\(\\); [print\\(s\\) for s in ['pulsar_set_emission_range','pulsar_set_emission_density','pulsar_set_formant_range','pulsar_set_formant_density'] if s.encode\\(\\) in d]\")"
     ]
   }
 }

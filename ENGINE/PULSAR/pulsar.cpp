@@ -28,6 +28,13 @@ public:
     void setFormantFreq(float hz)    { mTrain.setFormantFreq(hz); }
     void setWavePosition(float pos)  { mTrain.setWavePosition(pos); }
     void setGain(float g)            { mGain = g; }
+
+    // Stochastic spread (emission + formant only — RD_DSP exposes no wavePos/amp
+    // spread yet). At rest min=max + density 0 collapses to the center setters above.
+    void setEmissionRange(float lo, float hi) { mTrain.setEmissionRange(lo, hi); }
+    void setEmissionDensity(float d)          { mTrain.setEmissionDensity(d); }
+    void setFormantRange(float lo, float hi)  { mTrain.setFormantRange(lo, hi); }
+    void setFormantDensity(float d)           { mTrain.setFormantDensity(d); }
     void start()                     { mTrain.start(); }
     void stop()                      { mTrain.stop(); }
 
@@ -62,6 +69,10 @@ extern "C" void   pulsar_set_emission_rate(float hz)   { gPulsar.setEmissionRate
 extern "C" void   pulsar_set_formant_freq(float hz)    { gPulsar.setFormantFreq(hz); }
 extern "C" void   pulsar_set_wave_position(float pos)  { gPulsar.setWavePosition(pos); }
 extern "C" void   pulsar_set_gain(float g)             { gPulsar.setGain(g); }
+extern "C" void   pulsar_set_emission_range(float lo, float hi) { gPulsar.setEmissionRange(lo, hi); }
+extern "C" void   pulsar_set_emission_density(float d)          { gPulsar.setEmissionDensity(d); }
+extern "C" void   pulsar_set_formant_range(float lo, float hi)  { gPulsar.setFormantRange(lo, hi); }
+extern "C" void   pulsar_set_formant_density(float d)           { gPulsar.setFormantDensity(d); }
 extern "C" void   pulsar_start()                       { gPulsar.start(); }
 extern "C" void   pulsar_stop()                        { gPulsar.stop(); }
 extern "C" void   pulsar_process()                     { gPulsar.process(gOutBuf); }

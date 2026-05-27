@@ -13,10 +13,12 @@ let defaultContext = null;
 const workletLoaded = new WeakMap();
 let wasmBytesPromise = null;
 
+// rangeType / densityType present only for params the DSP can spread
+// stochastically (emission + formant). wavePos + gain are center-only.
 const PARAM_RANGES =
 {
-    emission: { min: 0.125, max: 150,  type: 'emissionRate' },
-    formant:  { min: 150,   max: 2000, type: 'formantFreq'  },
+    emission: { min: 0.125, max: 150,  type: 'emissionRate', rangeType: 'emissionRange', densityType: 'emissionDensity' },
+    formant:  { min: 150,   max: 2000, type: 'formantFreq',  rangeType: 'formantRange',  densityType: 'formantDensity'  },
     wavePos:  { min: 0,     max: 1,    type: 'wavePos'      },
     gain:     { min: 0,     max: 1,    type: 'gain'         }
 };
@@ -101,11 +103,23 @@ export class RdPulsar extends HTMLElement
         ui.addEventListener('paramchange', (e) =>
         {
             if (!this._node) return;
-            const { param, center } = e.detail;
+            const { param, min, center, max, density } = e.detail;
             const r = PARAM_RANGES[param];
             if (!r) return;
             const real = denormalize(center, r.min, r.max);
             this._node.port.postMessage({ type: r.type, value: real });
+
+            // Stochastic spread — only for params the DSP supports. min/max are
+            // normalized like center; density is already 0..1, passed raw.
+            if (r.rangeType)
+            {
+                this._node.port.postMessage({
+                    type: r.rangeType,
+                    min:  denormalize(min, r.min, r.max),
+                    max:  denormalize(max, r.min, r.max)
+                });
+                this._node.port.postMessage({ type: r.densityType, value: density });
+            }
 
             if (param === 'emission') this._emissionRate = real;
             if (param === 'wavePos') this._requestDisplayFill();
