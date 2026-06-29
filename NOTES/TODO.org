@@ -1,0 +1,5 @@
+#+TITLE: TODO
+#+AUTHOR: Ryan Devens
+#+DATE: 2026-06-25 21:11
+#+OPTIONS: toc:nil num:nil
+SUMMARY: This document is for todo items relating to web synth

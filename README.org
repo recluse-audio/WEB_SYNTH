@@ -1,0 +1,5 @@
+#+TITLE: README
+#+AUTHOR: Ryan Devens
+#+DATE: 2026-06-25 21:09
+#+OPTIONS: toc:nil num:nil
+SUMMARY: This document is a readme for my web synthesizer
