@@ -1,4 +1,6 @@
-
+/*
+ * This class extends AudioWorkletProcessor and
+ */
 class PulsarProcessor extends AudioWorkletProcessor
 {
     constructor()

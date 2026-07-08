@@ -3,3 +3,37 @@
 #+DATE: 2026-06-25 21:09
 #+OPTIONS: toc:nil num:nil
 SUMMARY: This document is a readme for my web synthesizer
+This repo is what gets RD_DSP in the browser.
+
+* How to Build / Use
+
+* How to Build / Run Tests
+
+
+* =ENGINE/PULSAR/pulsar.cpp= & =SUBMODULES/RD_DSP=
+- Used to build pulsar.wasm
+- =ENGINE/PULSAR/pulsar.cpp= is wrapper for stuff from =RD_DSP=
+  - exports functions called by =PUBLIC/pulsar-worklet.js=
+  - built into .wasm binary
+
+* =PUBLIC/pulsar.wasm= WASM (Web Assembly) "Shim"
+- Built from ~ENGINE/pulsar.cpp~
+  - Classes provide wrapper of RD_DSP =ENGINE/pulsar.cpp=
+  - export synth functions to be called by browser
+- ~Emscripten~ compiles to .wasm
+  - builds =ENGINE/PULSAR/pulsar.cpp= and =SUBMODULES/RD_DSP=
+  - output is =PUBLIC/pulsar.wasm=
+
+* AudioWorklet (PUBLIC/pulsar-worklet.js)
+The ~AudioWorkletProcessor~ is a browser-native base class defined by W3C Web Audio API spec
+- https://webaudio.github.io/web-audio-api/#audioworkletprocessor
+- JS ~AudioWorkletProcessor~ runs on browser audio thread
+- gets .wasm bytes via ~MessagePort~
+- gets processBlock() style calls
+
+
+* HTML Element (/PUBLIC/rd-pulsar.js)
+Custom HTML Element. What gets put in index.html
+- fetches =PUBLIC/pulsar.wasm=
+
+- Caqlls it =RdPulsar=

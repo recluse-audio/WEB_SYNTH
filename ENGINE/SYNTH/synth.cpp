@@ -1,10 +1,4 @@
-// ENGINE/SYNTH/synth.cpp
-// SynthProcessor + internal output buffer exported for zero-copy JS access.
-// JS calls synth_get_output_buf() once at init, wraps the pointer as a Float32Array
-// view over wasm linear memory, then calls synth_process() per audio block.
-//
-// Block size hardcoded to 128 = AudioWorklet's fixed render quantum (W3C spec).
-// Multi-voice / opaque-handle pattern arrives later (see rd_dsp_integration_plan.md §5).
+/** This was created by Ryan Devens in 2026*/
 
 #include "OSCILLATOR/Oscillator.h"
 #include "WAVEFORM/Wavetable.h"
@@ -12,6 +6,7 @@
 
 #include <vector>
 
+// This class owns the RD_DSP classes and is
 class SynthProcessor
 {
 public:

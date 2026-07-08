@@ -10,13 +10,12 @@ const WORKLET_URL = new URL('./pulsar-worklet.js', import.meta.url).href;
 const WASM_URL    = new URL('./pulsar.wasm',        import.meta.url).href;
 
 let defaultContext = null;
+// TODO: Remove this and always use default AudioContext
 const workletLoaded = new WeakMap();
 let wasmBytesPromise = null;
 
-// rangeType / densityType present for every param the DSP spreads stochastically
-// (emission, formant, wavePos, amp). amp = per-pulsar amplitude; the former master
-// "gain" slider was repurposed to drive it. Master gain (mGain in pulsar.cpp) is now
-// a fixed output trim with no UI control.
+// default param ranges for web audio processor
+// should probably derive these from source of truth here and in DSP
 const PARAM_RANGES =
 {
     emission: { min: 0.125, max: 150,  type: 'emissionRate', rangeType: 'emissionRange', densityType: 'emissionDensity' },
@@ -29,7 +28,8 @@ const denormalize = (n, min, max) => min + n * (max - min);
 
 function getDefaultContext()
 {
-    if (!defaultContext) defaultContext = new AudioContext();
+    if (!defaultContext)
+        defaultContext = new AudioContext();
     return defaultContext;
 }
 
@@ -75,6 +75,7 @@ export class RdPulsar extends HTMLElement
             </recluse-pulsar-synth>`;
     }
 
+    // TODO: Get rid of this setter
     set audioContext(ctx)
     {
         if (this._node) throw new Error('rd-pulsar: audioContext must be set before first start');
@@ -86,6 +87,7 @@ export class RdPulsar extends HTMLElement
         return this._ctx;
     }
 
+    // Called automatically by browser when <rd-pulsar> is added to the DOM
     connectedCallback()
     {
         const ui = this.shadowRoot.querySelector('recluse-pulsar-synth');
@@ -104,10 +106,12 @@ export class RdPulsar extends HTMLElement
 
         ui.addEventListener('paramchange', (e) =>
         {
-            if (!this._node) return;
+            if (!this._node)
+                return;
             const { param, min, center, max, density } = e.detail;
             const r = PARAM_RANGES[param];
-            if (!r) return;
+            if (!r)
+                return;
             const real = denormalize(center, r.min, r.max);
             this._node.port.postMessage({ type: r.type, value: real });
 
@@ -123,20 +127,25 @@ export class RdPulsar extends HTMLElement
                 this._node.port.postMessage({ type: r.densityType, value: density });
             }
 
-            if (param === 'emission') this._emissionRate = real;
-            if (param === 'wavePos') this._requestDisplayFill();
+            if (param === 'emission')
+                this._emissionRate = real;
+            if (param === 'wavePos')
+                this._requestDisplayFill();
         });
     }
 
     _requestDisplayFill()
     {
-        if (!this._node) return;
+        if (!this._node)
+            return;
         this._displayDirty = true;
-        if (this._rafId) return;
+        if (this._rafId)
+            return;
         this._rafId = requestAnimationFrame(() =>
         {
             this._rafId = 0;
-            if (!this._displayDirty || !this._node) return;
+            if (!this._displayDirty || !this._node)
+                return;
             this._displayDirty = false;
             this._node.port.postMessage({ type: 'fillDisplay' });
         });
@@ -145,22 +154,26 @@ export class RdPulsar extends HTMLElement
     _onDisplayBuffer(samples)
     {
         const ui = this.shadowRoot.querySelector('recluse-pulsar-synth');
-        if (ui) ui.samples = samples;
+        if (ui)
+            ui.samples = samples;
     }
 
     _startActivePolling()
     {
-        if (this._activeRafId) return;
+        if (this._activeRafId)
+            return;
 
         const tick = (now) =>
         {
             this._activeRafId = requestAnimationFrame(tick);
-            if (!this._node) return;
+            if (!this._node)
+                return;
 
             // When emission > 30 Hz, cap repaints at 25 Hz (40 ms guard).
             // Below that, query every frame (display-refresh limited).
             const cap = this._emissionRate > 30 ? 40 : 0;
-            if (cap > 0 && (now - this._lastPaintAt) < cap) return;
+            if (cap > 0 && (now - this._lastPaintAt) < cap)
+                return;
 
             this._node.port.postMessage({ type: 'queryActive' });
         };
@@ -170,11 +183,13 @@ export class RdPulsar extends HTMLElement
 
     _onActive(on)
     {
-        if (on === this._lastActiveOn) return;
+        if (on === this._lastActiveOn)
+            return;
         this._lastActiveOn = on;
         this._lastPaintAt  = performance.now();
         const ui = this.shadowRoot.querySelector('recluse-pulsar-synth');
-        if (ui) ui.active = on;
+        if (ui)
+            ui.active = on;
     }
 
     disconnectedCallback()
@@ -188,11 +203,16 @@ export class RdPulsar extends HTMLElement
 
     async _ensureNode()
     {
-        if (this._node) return;
+        if (this._node)
+            return;
 
-        if (!this._ctx) this._ctx = getDefaultContext();
-        if (this._ctx.state === 'suspended') await this._ctx.resume();
+        if (!this._ctx)
+            this._ctx = getDefaultContext();
+        if (this._ctx.state === 'suspended')
+            await this._ctx.resume();
 
+        // this is not loading context into node, instead it registers class pulsar-worklet.js
+        // in audio thread
         await ensureWorkletLoaded(this._ctx);
 
         this._node = new AudioWorkletNode(this._ctx, 'pulsar');
@@ -201,7 +221,8 @@ export class RdPulsar extends HTMLElement
         // Persistent listener — survives past the ready handshake.
         this._node.port.addEventListener('message', (e) =>
         {
-            if (!e.data) return;
+            if (!e.data)
+                return;
             if (e.data.type === 'displayBuffer')
             {
                 this._onDisplayBuffer(e.data.samples);
@@ -211,7 +232,8 @@ export class RdPulsar extends HTMLElement
                 this._onActive(e.data.on);
                 // Randomized emission can move the wave position; regenerate the
                 // displayed waveform when the worklet reports it changed.
-                if (e.data.wavePosChanged) this._requestDisplayFill();
+                if (e.data.wavePosChanged)
+                    this._requestDisplayFill();
             }
         });
 
@@ -243,7 +265,8 @@ export class RdPulsar extends HTMLElement
             // Skip params the mounted component doesn't expose (e.g. stale dist
             // missing a renamed prop). +undefined is NaN — pushing it would set
             // the DSP param to NaN and silence output. Let the DSP default stand.
-            if (!Number.isFinite(n)) continue;
+            if (!Number.isFinite(n))
+                continue;
             this._node.port.postMessage({ type: r.type, value: denormalize(n, r.min, r.max) });
         }
 
