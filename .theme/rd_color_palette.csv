@@ -1,0 +1,66 @@
+# rd_color_palette.csv — RD_CMD's colors.
+#
+# One row per color: <face-name>-FG,#hex  sets that face's foreground
+#                    <face-name>-BG,#hex  sets that face's background
+#
+# Lines starting with '#' are comments. Blank lines are ignored.
+# A row is silently skipped if the face is unknown to Emacs, so a face owned by
+# a lazily-loaded package (hl-line, doom-modeline, org-modern) will not work here.
+# Find a face name by putting the cursor on the text and running M-x describe-face.
+
+# --- the text itself ---
+default-BG,#010403
+default-FG,#EA3AA7
+
+# --- syntax highlighting ---
+font-lock-keyword-face-FG,#81a1c1
+font-lock-string-face-FG,#a3ff8c
+font-lock-comment-face-FG,#718e88
+font-lock-function-name-face-FG,#00cFfd
+font-lock-variable-name-face-FG,#d8dee9
+font-lock-type-face-FG,#8fbcbb
+font-lock-constant-face-FG,#81a1c1
+font-lock-builtin-face-FG,#81a1c1
+font-lock-doc-face-FG,#718e88
+font-lock-warning-face-FG,#ff5f5f
+font-lock-preprocessor-face-FG,#8fbcbb
+font-lock-negation-char-face-FG,#ff5f5f
+
+# --- the cursor. Its color is the BACKGROUND of the `cursor' face, not the
+# --- foreground. A cursor-FG row would do nothing.
+cursor-BG,#EAFFA7
+
+# --- selection and search highlights ---
+region-BG,#7a1230
+highlight-BG,#7a1230
+secondary-selection-BG,#3a0303
+isearch-BG,#EA3AA7
+isearch-FG,#2a0202
+lazy-highlight-BG,#7a1230
+lazy-highlight-FG,#d8dee9
+match-BG,#7a1230
+show-paren-match-BG,#00cFfd
+show-paren-match-FG,#2a0202
+
+# --- the modeline, the bar across the bottom of each window ---
+mode-line-BG,#a0deed
+mode-line-FG,#EA3AA7
+mode-line-inactive-BG,#3a0303
+mode-line-inactive-FG,#718e88
+header-line-BG,#2a0202
+header-line-FG,#718e88
+
+# --- the margins: fringe is the gutter beside the text, line numbers, and the
+# --- border drawn between two side-by-side windows.
+fringe-BG,#510403
+line-number-FG,#718e88
+line-number-current-line-FG,#EA3AA7
+vertical-border-FG,#7a1230
+
+# --- messages and prompts ---
+minibuffer-prompt-FG,#00cFfd
+link-FG,#81a1c1
+error-FG,#ff5f5f
+warning-FG,#f0c674
+success-FG,#a3ff8c
+trailing-whitespace-BG,#ff5f5f

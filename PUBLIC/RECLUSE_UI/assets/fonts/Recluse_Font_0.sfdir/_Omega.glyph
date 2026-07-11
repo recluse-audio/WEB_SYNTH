@@ -1,0 +1,107 @@
+StartChar: Omega
+Encoding: 937 937 214
+AltUni2: 002126.ffffffff.0 002126.ffffffff.0
+Width: 1056
+GlyphClass: 1
+Flags: W
+TtInstrs:
+NPUSHB
+ 28
+ 33
+ 25
+ 31
+ 31
+ 25
+ 3
+ 29
+ 2
+ 7
+ 12
+ 6
+ 16
+ 10
+ 10
+ 16
+ 32
+ 2
+ 6
+ 29
+ 12
+ 12
+ 9
+ 5
+ 20
+ 30
+ 10
+ 1
+ 9
+SVTCA[y-axis]
+MDAP[rnd]
+SHP[rp1]
+MDRP[min,rnd,black]
+SHP[rp2]
+MDRP[rp0,min,rnd,grey]
+MDRP[min,rnd,black]
+SRP2
+IP
+RUTG
+MDAP[rnd]
+SHP[rp1]
+RDTG
+MDRP[min,rnd,black]
+SHP[rp2]
+SVTCA[x-axis]
+RTG
+SRP0
+MDRP[min,rnd,white]
+SHP[rp2]
+MDAP[rnd]
+SRP0
+MDRP[rp0,min,rnd,black]
+MDRP[rp0,min,rnd,black]
+MDRP[rp0,min,rnd,black]
+MDRP[rp0,min,rnd,white]
+MDRP[rp0,min,rnd,black]
+MDRP[rp0,min,rnd,black]
+MDRP[min,rnd,black]
+SHP[rp2]
+MDAP[rnd]
+SRP0
+MDRP[min,rnd,white]
+IUP[x]
+IUP[y]
+EndTTInstrs
+LayerCount: 2
+Fore
+SplineSet
+1000 -1 m 1,0,-1
+ 612 -1 l 1,1,-1
+ 612 489 l 1,2,-1
+ 796 489 l 1,3,-1
+ 796 1442 l 1,4,-1
+ 265 1441 l 1,5,-1
+ 264 489 l 1,6,-1
+ 448 489 l 1,7,-1
+ 448 -1 l 1,8,-1
+ 59 -1 l 1,9,-1
+ 59 129 l 1,10,-1
+ 331 129 l 1,11,-1
+ 331 366 l 1,12,-1
+ 236 366 l 2,13,14
+ 187 366 187 366 156 397 c 128,-1,15
+ 125 428 125 428 125 477 c 2,16,-1
+ 125 1454 l 2,17,18
+ 125 1503 125 1503 156 1534 c 128,-1,19
+ 187 1565 187 1565 236 1565 c 2,20,-1
+ 821 1565 l 2,21,22
+ 870 1565 870 1565 902.5 1534 c 128,-1,23
+ 935 1503 935 1503 935 1454 c 2,24,-1
+ 935 477 l 2,25,26
+ 935 428 935 428 904 397 c 128,-1,27
+ 873 366 873 366 824 366 c 2,28,-1
+ 729 366 l 1,29,-1
+ 729 129 l 1,30,-1
+ 1000 129 l 1,31,-1
+ 1000 -1 l 1,0,-1
+EndSplineSet
+EndChar

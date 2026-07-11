@@ -1,0 +1,158 @@
+StartChar: three
+Encoding: 51 51 22
+Width: 965
+GlyphClass: 1
+Flags: W
+TtInstrs:
+PUSHB_6
+ 23
+ 47
+ 39
+ 47
+ 2
+ 42
+PUSHW_1
+ -24
+NPUSHB
+ 24
+ 121
+ 34
+ 1
+ 119
+ 13
+ 1
+ 33
+ 100
+ 49
+ 0
+ 53
+ 0
+ 25
+ 25
+ 41
+ 16
+ 100
+ 0
+ 56
+ 41
+ 8
+ 55
+ 41
+ 37
+PUSHW_1
+ -64
+NPUSHB
+ 31
+ 12
+ 16
+ 72
+ 37
+ 35
+ 104
+ 45
+ 53
+ 53
+ 20
+ 116
+ 27
+ 109
+ 48
+ 30
+ 96
+ 30
+ 112
+ 30
+ 3
+ 30
+ 30
+ 4
+ 45
+ 5
+ 7
+ 12
+ 14
+ 104
+ 4
+ 13
+SVTCA[y-axis]
+MIAP[rnd]
+MIRP[rp0,min,rnd,black]
+MDRP[rp0,rnd,white]
+MDRP[rnd,black]
+MIAP[rnd]
+SRP2
+IP
+RUTG
+MDAP[rnd]
+DELTAP1
+RDTG
+MIRP[rnd,grey]
+RTG
+MIRP[min,rnd,black]
+IP
+RTDG
+MDAP[rnd]
+RTG
+SRP0
+MIRP[rp0,min,rnd,black]
+MDRP[rp0,rnd,white]
+CALL
+MDRP[rnd,black]
+SVTCA[x-axis]
+SRP0
+MDRP[rp0,rnd,white]
+MDRP[rnd,white]
+SRP0
+MDRP[rp0,min,rnd,white]
+MIRP[min,rnd,black]
+SRP2
+IP
+MDAP[rnd]
+SRP2
+IP
+SRP0
+MDRP[rp0,rnd,grey]
+MIRP[min,rnd,black]
+IUP[x]
+IUP[y]
+SVTCA[y-axis]
+DELTAP1
+DELTAP1
+SHPIX
+DELTAP1
+EndTTInstrs
+LayerCount: 2
+Fore
+SplineSet
+913 342 m 0,0,1
+ 913 158 913 158 775 61 c 0,2,3
+ 654 -25 654 -25 463 -25 c 0,4,5
+ 236 -25 236 -25 53 59 c 0,6,7
+ 34 68 34 68 34 77 c 1,8,9
+ 34 74 34 74 82 233 c 0,10,11
+ 88 255 88 255 100 255 c 1,12,13
+ 278 164 278 164 393 164 c 0,14,15
+ 666 164 666 164 666 362 c 0,16,17
+ 666 485 666 485 572 533 c 0,18,19
+ 505 568 505 568 371 568 c 0,20,21
+ 343 568 343 568 293 566 c 128,-1,22
+ 243 564 243 564 222 564 c 0,23,24
+ 164 564 164 564 164 588 c 0,25,26
+ 164 724 164 724 194 724 c 0,27,28
+ 238 724 238 724 326.5 714 c 128,-1,29
+ 415 704 415 704 459 704 c 0,30,31
+ 525 704 525 704 566.5 748 c 128,-1,32
+ 608 792 608 792 608 858 c 0,33,34
+ 608 1042 608 1042 369 1042 c 0,35,36
+ 229 1042 229 1042 117 983 c 0,37,38
+ 113 981 113 981 107 981 c 0,39,40
+ 82 981 82 981 82 1130 c 0,41,42
+ 82 1180 82 1180 243 1208 c 0,43,44
+ 354 1227 354 1227 444 1227 c 0,45,46
+ 611 1227 611 1227 729 1154 c 0,47,48
+ 870 1068 870 1068 870 911 c 0,49,50
+ 870 830 870 830 826 749 c 0,51,52
+ 778 663 778 663 707 633 c 1,53,54
+ 913 564 913 564 913 342 c 0,0,1
+EndSplineSet
+EndChar

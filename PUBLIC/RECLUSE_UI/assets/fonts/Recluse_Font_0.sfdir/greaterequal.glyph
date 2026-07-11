@@ -1,0 +1,79 @@
+StartChar: greaterequal
+Encoding: 8805 8805 244
+Width: 698
+GlyphClass: 1
+Flags: W
+TtInstrs:
+NPUSHB
+ 21
+ 3
+ 0
+ 0
+ 8
+ 9
+ 4
+ 4
+ 1
+ 1
+ 9
+ 12
+ 4
+ 5
+ 7
+ 0
+ 3
+ 2
+ 1
+ 10
+ 9
+ 12
+SVTCA[y-axis]
+SRP0
+MDRP[rp0,rnd,white]
+MDRP[rp0,min,rnd,black]
+MDRP[rp0,rnd,white]
+RDTG
+MDRP[min,rnd,black]
+RTHG
+MDRP[rp0,min,rnd,black]
+SHP[rp2]
+SHP[rp2]
+MDRP[rp0,min,rnd,black]
+RDTG
+MDRP[min,rnd,black]
+SVTCA[x-axis]
+RTG
+SRP0
+MDRP[min,rnd,white]
+SHP[rp2]
+MDAP[rnd]
+SHP[rp2]
+MDAP[rnd]
+SRP0
+MDRP[min,rnd,black]
+SHP[rp2]
+MDAP[rnd]
+RDTG
+MDRP[min,rnd,black]
+IUP[x]
+IUP[y]
+EndTTInstrs
+LayerCount: 2
+Fore
+SplineSet
+604 648 m 1,0,-1
+ 96 302 l 1,1,-1
+ 96 441 l 1,2,-1
+ 466 685 l 1,3,-1
+ 96 930 l 1,4,-1
+ 96 1069 l 1,5,-1
+ 102 1069 l 1,6,-1
+ 604 720 l 1,7,-1
+ 604 648 l 1,0,-1
+603 145 m 1,8,-1
+ 96 145 l 1,9,-1
+ 96 264 l 1,10,-1
+ 603 264 l 1,11,-1
+ 603 145 l 1,8,-1
+EndSplineSet
+EndChar

@@ -1,0 +1,28 @@
+StartChar: yacute
+Encoding: 253 253 191
+Width: 975
+GlyphClass: 1
+Flags: W
+TtInstrs:
+NPUSHB
+ 11
+ 1
+ 29
+ 61
+ 79
+ 1
+ 0
+ 71
+ 61
+ 42
+ 42
+ 80
+CALL
+SHC[rp2]
+CALL
+EndTTInstrs
+LayerCount: 2
+Fore
+Refer: 92 121 N 1 0 0 1 0 0 3
+Refer: 118 180 N 1 0 0 1 229 -37 2
+EndChar

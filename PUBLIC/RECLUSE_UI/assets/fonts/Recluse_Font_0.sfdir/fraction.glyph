@@ -1,0 +1,64 @@
+StartChar: fraction
+Encoding: 8260 8260 231
+AltUni2: 002215.ffffffff.0 002215.ffffffff.0
+Width: 625
+GlyphClass: 1
+Flags: W
+TtInstrs:
+NPUSHB
+ 18
+ 17
+ 8
+ 0
+ 8
+ 105
+ 11
+ 17
+ 20
+ 11
+ 11
+ 17
+ 11
+ 0
+ 11
+ 0
+ 8
+ 17
+ 8
+SVTCA[y-axis]
+MDAP[rnd]
+MDAP[rnd]
+SRP2
+IP
+IP
+SVTCA[x-axis]
+MDAP[rnd]
+MDAP[rnd]
+SDPVTL[orthog]
+SFVTPV
+MDAP[no-rnd]
+CALL
+SDPVTL[orthog]
+SFVTPV
+RDTG
+MDRP[rnd,grey]
+IUP[x]
+IUP[y]
+EndTTInstrs
+LayerCount: 2
+Fore
+SplineSet
+730 1164 m 0,0,1
+ 730 1159 730 1159 723 1145 c 0,2,3
+ 609 952 609 952 389 560 c 1,4,5
+ 285 351 285 351 65 -60 c 0,6,7
+ 55 -78 55 -78 47 -78 c 0,8,9
+ 42 -78 42 -78 -24 -26 c 128,-1,10
+ -90 26 -90 26 -90 32 c 256,11,12
+ -90 38 -90 38 -85 47 c 0,13,14
+ 341 774 341 774 582 1255 c 0,15,16
+ 589 1268 589 1268 596 1268 c 0,17,18
+ 611 1268 611 1268 670.5 1222.5 c 128,-1,19
+ 730 1177 730 1177 730 1164 c 0,0,1
+EndSplineSet
+EndChar

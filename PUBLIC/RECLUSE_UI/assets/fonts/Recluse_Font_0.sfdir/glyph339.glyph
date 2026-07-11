@@ -1,0 +1,18 @@
+StartChar: glyph339
+Encoding: 65631 -1 340
+Width: 1262
+GlyphClass: 1
+Flags: W
+TtInstrs:
+PUSHB_4
+ 1
+ 47
+ 65
+ 79
+CALL
+EndTTInstrs
+LayerCount: 2
+Fore
+Refer: 314 -1 N 1 0 0 1 0 0 3
+Refer: 67 96 N 1 0 0 1 284 347 2
+EndChar

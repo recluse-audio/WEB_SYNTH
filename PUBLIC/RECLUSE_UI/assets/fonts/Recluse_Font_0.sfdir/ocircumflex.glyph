@@ -1,0 +1,28 @@
+StartChar: ocircumflex
+Encoding: 244 244 182
+Width: 1047
+GlyphClass: 1
+Flags: W
+TtInstrs:
+NPUSHB
+ 11
+ 2
+ 12
+ 41
+ 79
+ 2
+ 0
+ 37
+ 37
+ 12
+ 12
+ 80
+CALL
+SHC[rp2]
+CALL
+EndTTInstrs
+LayerCount: 2
+Fore
+Refer: 82 111 N 1 0 0 1 0 0 3
+Refer: 205 710 N 1 0 0 1 160 -4 2
+EndChar

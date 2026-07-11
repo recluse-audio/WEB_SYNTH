@@ -1,0 +1,28 @@
+StartChar: Ograve
+Encoding: 210 210 148
+Width: 1485
+GlyphClass: 1
+Flags: W
+TtInstrs:
+NPUSHB
+ 11
+ 2
+ 12
+ 37
+ 79
+ 2
+ 0
+ 46
+ 46
+ 4
+ 4
+ 80
+CALL
+SHC[rp2]
+CALL
+EndTTInstrs
+LayerCount: 2
+Fore
+Refer: 50 79 N 1 0 0 1 0 0 3
+Refer: 67 96 N 1 0 0 1 424 352 2
+EndChar

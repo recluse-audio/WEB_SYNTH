@@ -1,0 +1,28 @@
+StartChar: zcaron
+Encoding: 382 382 203
+Width: 862
+GlyphClass: 1
+Flags: W
+TtInstrs:
+NPUSHB
+ 11
+ 1
+ 39
+ 60
+ 79
+ 1
+ 0
+ 71
+ 71
+ 39
+ 39
+ 80
+CALL
+SHC[rp2]
+CALL
+EndTTInstrs
+LayerCount: 2
+Fore
+Refer: 93 122 N 1 0 0 1 0 0 3
+Refer: 206 711 N 1 0 0 1 100 -86 2
+EndChar

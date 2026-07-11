@@ -1,0 +1,20 @@
+import { t as v } from "./attributes-B-yarnvm.js";
+import { aa as o, _ as b } from "./custom-element-DAaXFYsU.js";
+function h(i, l, f, C, u, r) {
+  var a = (
+    /** @type {any} */
+    i[o]
+  );
+  if (b || a !== f || a === void 0) {
+    var t = v(f, C, r);
+    (!b || t !== i.getAttribute("class")) && (t == null ? i.removeAttribute("class") : l ? i.className = t : i.setAttribute("class", t)), i[o] = f;
+  } else if (r && u !== r)
+    for (var A in r) {
+      var g = !!r[A];
+      (u == null || g !== !!u[A]) && i.classList.toggle(A, g);
+    }
+  return r;
+}
+export {
+  h as s
+};

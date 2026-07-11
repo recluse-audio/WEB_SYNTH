@@ -1,0 +1,35 @@
+StartChar: Idieresis
+Encoding: 207 207 145
+Width: 485
+GlyphClass: 1
+Flags: W
+TtInstrs:
+NPUSHB
+ 16
+ 2
+ 18
+ 65
+ 79
+ 1
+ 18
+ 37
+ 79
+ 2
+ 1
+ 0
+ 82
+ 39
+ 13
+ 29
+ 80
+CALL
+SHC[rp2]
+SHC[rp2]
+CALL
+CALL
+EndTTInstrs
+LayerCount: 2
+Fore
+Refer: 44 73 N 1 0 0 1 0 0 3
+Refer: 106 168 N 1 0 0 1 -127 266 2
+EndChar

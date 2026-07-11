@@ -1,0 +1,28 @@
+StartChar: ntilde
+Encoding: 241 241 179
+Width: 1071
+GlyphClass: 1
+Flags: W
+TtInstrs:
+NPUSHB
+ 11
+ 1
+ 49
+ 62
+ 79
+ 1
+ 0
+ 72
+ 59
+ 17
+ 17
+ 80
+CALL
+SHC[rp2]
+CALL
+EndTTInstrs
+LayerCount: 2
+Fore
+Refer: 81 110 N 1 0 0 1 0 0 3
+Refer: 211 732 N 1 0 0 1 176 -47 2
+EndChar

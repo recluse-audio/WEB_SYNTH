@@ -1,0 +1,47 @@
+StartChar: glyph247
+Encoding: 65540 -1 249
+Width: 1434
+GlyphClass: 1
+Flags: W
+TtInstrs:
+NPUSHB
+ 10
+ 0
+ 145
+ 127
+ 14
+ 1
+ 14
+ 22
+ 9
+ 137
+ 18
+SVTCA[y-axis]
+MDAP[rnd]
+MIRP[min,rnd,black]
+SVTCA[x-axis]
+SRP0
+MDRP[rp0,rnd,grey]
+DELTAP1
+MIRP[min,rnd,grey]
+IUP[x]
+IUP[y]
+EndTTInstrs
+LayerCount: 2
+Fore
+SplineSet
+653 782 m 1,0,1
+ 653 797 653 797 629 690 c 0,2,3
+ 626 661 626 661 616 604 c 0,4,5
+ 614 594 614 594 592 594 c 0,6,7
+ 542 594 542 594 441.5 596 c 128,-1,8
+ 341 598 341 598 291 598 c 0,9,10
+ 242 598 242 598 145 591 c 128,-1,11
+ 48 584 48 584 0 584 c 0,12,13
+ -27 584 -27 584 -27 614 c 0,14,15
+ -27 647 -27 647 31 784 c 0,16,17
+ 37 799 37 799 59 799 c 0,18,19
+ 123 799 123 799 633 807 c 1,20,21
+ 653 798 653 798 653 782 c 1,0,1
+EndSplineSet
+EndChar

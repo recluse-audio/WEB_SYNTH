@@ -1,0 +1,63 @@
+StartChar: pi
+Encoding: 960 960 215
+Width: 804
+GlyphClass: 1
+Flags: W
+TtInstrs:
+NPUSHB
+ 16
+ 0
+ 1
+ 4
+ 5
+ 9
+ 8
+ 12
+ 8
+ 5
+ 1
+ 10
+ 12
+ 3
+ 7
+ 7
+ 12
+SVTCA[y-axis]
+SRP0
+ALIGNRP
+SRP0
+ALIGNRP
+SRP0
+MDRP[rp0,min,rnd,white]
+MDRP[min,rnd,black]
+MDRP[min,rnd,black]
+MDRP[min,rnd,black]
+SVTCA[x-axis]
+SRP0
+MDRP[rp0,rnd,white]
+MDRP[min,rnd,black]
+MDRP[rp0,min,rnd,black]
+MDRP[rp0,min,rnd,white]
+MDRP[rp0,min,rnd,black]
+MDRP[min,rnd,black]
+IUP[x]
+IUP[y]
+EndTTInstrs
+LayerCount: 2
+Fore
+SplineSet
+764 770 m 1,0,-1
+ 616 770 l 1,1,-1
+ 616 0 l 1,2,-1
+ 481 0 l 1,3,-1
+ 481 770 l 1,4,-1
+ 318 770 l 1,5,-1
+ 318 0 l 1,6,-1
+ 183 0 l 1,7,-1
+ 183 770 l 1,8,-1
+ 39 770 l 1,9,-1
+ 39 893 l 1,10,-1
+ 764 893 l 1,11,-1
+ 764 770 l 1,0,-1
+EndSplineSet
+EndChar

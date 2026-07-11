@@ -152,7 +152,7 @@ export class RdSynth extends HTMLElement
 
         startBtn.addEventListener('click', async () =>
         {
-            await this._ensureNode();
+            await this._initAudioNode();
             this._node.port.postMessage({ type: 'start' });
             this._started = true;
             startBtn.disabled = true;
@@ -176,7 +176,7 @@ export class RdSynth extends HTMLElement
         });
     }
 
-    async _ensureNode()
+    async _initAudioNode()
     {
         if (this._node) return;
 

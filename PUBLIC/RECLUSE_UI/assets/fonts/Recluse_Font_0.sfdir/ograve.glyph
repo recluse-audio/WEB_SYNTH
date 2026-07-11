@@ -1,0 +1,28 @@
+StartChar: ograve
+Encoding: 242 242 180
+Width: 1047
+GlyphClass: 1
+Flags: W
+TtInstrs:
+NPUSHB
+ 11
+ 2
+ 12
+ 37
+ 79
+ 2
+ 0
+ 46
+ 37
+ 12
+ 12
+ 80
+CALL
+SHC[rp2]
+CALL
+EndTTInstrs
+LayerCount: 2
+Fore
+Refer: 82 111 N 1 0 0 1 0 0 3
+Refer: 67 96 N 1 0 0 1 119 -18 2
+EndChar

@@ -1,0 +1,28 @@
+StartChar: glyph330
+Encoding: 65622 -1 331
+Width: 1190
+GlyphClass: 1
+Flags: W
+TtInstrs:
+NPUSHB
+ 11
+ 2
+ 47
+ 77
+ 79
+ 2
+ 0
+ 87
+ 74
+ 64
+ 64
+ 80
+CALL
+SHC[rp2]
+CALL
+EndTTInstrs
+LayerCount: 2
+Fore
+Refer: 294 -1 N 1 0 0 1 0 0 3
+Refer: 211 732 N 1 0 0 1 236 345 2
+EndChar

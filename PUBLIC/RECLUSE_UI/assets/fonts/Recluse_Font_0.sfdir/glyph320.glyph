@@ -1,0 +1,27 @@
+StartChar: glyph320
+Encoding: 65612 -1 321
+Width: 1339
+GlyphClass: 1
+Flags: W
+TtInstrs:
+NPUSHB
+ 9
+ 16
+ 65
+ 32
+ 65
+ 64
+ 65
+ 112
+ 65
+ 4
+SVTCA[x-axis]
+DELTAP1
+IUP[x]
+IUP[y]
+EndTTInstrs
+LayerCount: 2
+Fore
+Refer: 297 -1 N 1 0 0 1 42 0 2
+Refer: 249 -1 N 1 0 0 1 0 0 2
+EndChar

@@ -94,7 +94,7 @@ export class RdPulsar extends HTMLElement
 
         ui.addEventListener('start', async () =>
         {
-            await this._ensureNode();
+            await this._initAudioNode();
             this._node.port.postMessage({ type: 'start' });
         });
 
@@ -201,7 +201,7 @@ export class RdPulsar extends HTMLElement
         }
     }
 
-    async _ensureNode()
+    async _initAudioNode()
     {
         if (this._node)
             return;

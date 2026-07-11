@@ -1,0 +1,28 @@
+StartChar: Igrave
+Encoding: 204 204 142
+Width: 485
+GlyphClass: 1
+Flags: W
+TtInstrs:
+NPUSHB
+ 11
+ 1
+ 18
+ 37
+ 79
+ 1
+ 0
+ 41
+ 32
+ 21
+ 21
+ 80
+CALL
+SHC[rp2]
+CALL
+EndTTInstrs
+LayerCount: 2
+Fore
+Refer: 44 73 N 1 0 0 1 0 0 3
+Refer: 67 96 N 1 0 0 1 -76 336 2
+EndChar

@@ -1,0 +1,179 @@
+StartChar: glyph252
+Encoding: 65545 -1 254
+Width: 1047
+GlyphClass: 1
+Flags: W
+TtInstrs:
+NPUSHB
+ 30
+ 9
+ 13
+ 105
+ 13
+ 121
+ 13
+ 3
+ 218
+ 13
+ 234
+ 13
+ 2
+ 201
+ 13
+ 1
+ 184
+ 13
+ 1
+ 169
+ 13
+ 1
+ 72
+ 13
+ 1
+ 134
+ 4
+ 150
+ 4
+ 2
+ 4
+PUSHW_1
+ -24
+NPUSHB
+ 71
+ 22
+ 25
+ 72
+ 198
+ 4
+ 1
+ 181
+ 4
+ 1
+ 135
+ 4
+ 151
+ 4
+ 167
+ 4
+ 3
+ 56
+ 4
+ 72
+ 4
+ 88
+ 4
+ 3
+ 74
+ 17
+ 1
+ 13
+ 4
+ 8
+ 17
+ 8
+ 17
+ 8
+ 11
+ 73
+ 0
+ 1
+ 32
+ 0
+ 1
+ 31
+ 0
+ 1
+ 0
+ 0
+ 1
+ 0
+ 21
+ 96
+ 11
+ 208
+ 11
+ 2
+ 11
+ 20
+ 4
+ 13
+ 0
+ 11
+ 0
+ 11
+ 0
+ 8
+ 0
+ 17
+ 32
+ 17
+ 2
+ 17
+ 8
+ 11
+SVTCA[y-axis]
+MIAP[rnd]
+MDAP[rnd]
+DELTAP1
+SRP2
+IP
+IP
+RTHG
+MDAP[rnd]
+MDAP[rnd]
+SRP2
+IP
+IP
+SVTCA[x-axis]
+RTG
+SRP0
+MDRP[rnd,white]
+DELTAP1
+SRP0
+MDRP[rnd,white]
+DELTAP1
+DELTAP1
+DELTAP1
+DELTAP1
+SRP1
+IP
+IP
+RTHG
+MDAP[rnd]
+MDAP[rnd]
+SRP2
+IP
+IP
+DELTAP1
+IUP[x]
+IUP[y]
+DELTAP1
+DELTAP1
+DELTAP1
+DELTAP1
+CALL
+DELTAP2
+DELTAP1
+DELTAP1
+DELTAP1
+DELTAP1
+DELTAP1
+DELTAP2
+EndTTInstrs
+LayerCount: 2
+Fore
+SplineSet
+958 958 m 0,0,1
+ 958 947 958 947 944 930 c 0,2,3
+ 777 737 777 737 445 351 c 0,4,5
+ 345 231 345 231 141 -4 c 0,6,7
+ 135 -12 135 -12 121 -20 c 1,8,9
+ 113 -17 113 -17 90.5 16.5 c 128,-1,10
+ 68 50 68 50 68 57 c 0,11,12
+ 68 65 68 65 446 508 c 0,13,14
+ 808 932 808 932 887 1020 c 0,15,16
+ 892 1027 892 1027 904 1034 c 1,17,18
+ 910 1031 910 1031 934 997 c 128,-1,19
+ 958 963 958 963 958 958 c 0,0,1
+EndSplineSet
+EndChar

@@ -1,0 +1,35 @@
+StartChar: edieresis
+Encoding: 235 235 173
+Width: 987
+GlyphClass: 1
+Flags: W
+TtInstrs:
+NPUSHB
+ 16
+ 3
+ 27
+ 76
+ 79
+ 2
+ 27
+ 48
+ 79
+ 3
+ 2
+ 0
+ 93
+ 50
+ 27
+ 34
+ 80
+CALL
+SHC[rp2]
+SHC[rp2]
+CALL
+CALL
+EndTTInstrs
+LayerCount: 2
+Fore
+Refer: 72 101 N 1 0 0 1 0 0 3
+Refer: 106 168 N 1 0 0 1 139 -115 2
+EndChar

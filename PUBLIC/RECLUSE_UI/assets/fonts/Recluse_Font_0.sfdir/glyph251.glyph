@@ -1,0 +1,91 @@
+StartChar: glyph251
+Encoding: 65544 -1 253
+Width: 1485
+GlyphClass: 1
+Flags: W
+TtInstrs:
+NPUSHB
+ 35
+ 5
+ 4
+ 1
+ 24
+ 4
+ 88
+ 4
+ 2
+ 5
+ 18
+ 1
+ 18
+ 8
+ 18
+ 8
+ 12
+ 48
+ 0
+ 1
+ 15
+ 0
+ 1
+ 0
+ 22
+ 12
+ 21
+ 12
+ 0
+ 12
+ 0
+ 8
+ 18
+ 2
+ 8
+ 13
+SVTCA[y-axis]
+MIAP[rnd]
+MIAP[rnd]
+SRP2
+IP
+IP
+RTHG
+MDAP[rnd]
+MDAP[rnd]
+SVTCA[x-axis]
+RTG
+SRP0
+MDRP[rnd,white]
+SRP0
+MDRP[rnd,white]
+DELTAP1
+DELTAP1
+SRP1
+IP
+IP
+RTHG
+MDAP[rnd]
+MDAP[rnd]
+DELTAP1
+IUP[x]
+IUP[y]
+SVTCA[y-axis]
+DELTAP1
+SVTCA[x-axis]
+DELTAP1
+EndTTInstrs
+LayerCount: 2
+Fore
+SplineSet
+1317 1292 m 0,0,1
+ 1317 1279 1317 1279 1298 1257 c 0,2,3
+ 1284 1240 1284 1240 735 632 c 1,4,5
+ 546 416 546 416 158 -6 c 0,6,7
+ 145 -19 145 -19 138 -19 c 0,8,9
+ 129 -19 129 -19 103 21 c 0,10,11
+ 82 56 82 56 76 72 c 1,12,13
+ 82 87 82 87 615 676 c 0,14,15
+ 1208 1333 1208 1333 1241 1370 c 0,16,17
+ 1247 1377 1247 1377 1260 1384 c 1,18,19
+ 1273 1377 1273 1377 1295 1341.5 c 128,-1,20
+ 1317 1306 1317 1306 1317 1292 c 0,0,1
+EndSplineSet
+EndChar

@@ -1,0 +1,68 @@
+StartChar: breve
+Encoding: 728 728 207
+Width: 715
+GlyphClass: 1
+Flags: W
+TtInstrs:
+NPUSHB
+ 24
+ 19
+ 170
+ 0
+ 24
+ 13
+ 170
+ 64
+ 8
+ 23
+ 21
+ 10
+ 144
+ 128
+ 15
+ 129
+ 112
+ 4
+ 144
+ 4
+ 240
+ 4
+ 3
+ 4
+ 147
+SVTCA[y-axis]
+MIAP[rnd]
+DELTAP1
+MIRP[min,rnd,black]
+SMD
+MIRP[rp0,min,rnd,black]
+MDRP[rnd,grey]
+SVTCA[x-axis]
+SRP0
+MDRP[rp0,rnd,white]
+SMD
+MIRP[min,rnd,black]
+SRP0
+MDRP[rp0,rnd,white]
+MIRP[min,rnd,black]
+IUP[x]
+IUP[y]
+EndTTInstrs
+LayerCount: 2
+Fore
+SplineSet
+655 1386 m 0,0,1
+ 655 1245 655 1245 575 1156 c 0,2,3
+ 492 1063 492 1063 352 1063 c 0,4,5
+ 211 1063 211 1063 127 1155 c 0,6,7
+ 47 1244 47 1244 47 1386 c 0,8,9
+ 47 1402 47 1402 76 1402 c 0,10,11
+ 175 1402 175 1402 179 1384.5 c 128,-1,12
+ 183 1367 183 1367 192 1331 c 0,13,14
+ 232 1214 232 1214 352 1214 c 0,15,16
+ 470 1214 470 1214 511 1329 c 0,17,18
+ 514 1348 514 1348 524 1384 c 0,19,20
+ 530 1399 530 1399 563 1399 c 0,21,22
+ 655 1399 655 1399 655 1386 c 0,0,1
+EndSplineSet
+EndChar

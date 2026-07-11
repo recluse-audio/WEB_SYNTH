@@ -1,0 +1,28 @@
+StartChar: icircumflex
+Encoding: 238 238 176
+Width: 451
+GlyphClass: 1
+Flags: W
+TtInstrs:
+NPUSHB
+ 11
+ 1
+ 18
+ 36
+ 79
+ 1
+ 0
+ 32
+ 32
+ 22
+ 22
+ 80
+CALL
+SHC[rp2]
+CALL
+EndTTInstrs
+LayerCount: 2
+Fore
+Refer: 194 305 N 1 0 0 1 0 0 3
+Refer: 205 710 N 1 0 0 1 -137 -10 2
+EndChar

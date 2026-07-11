@@ -1,0 +1,136 @@
+StartChar: quotedblright
+Encoding: 8221 8221 222
+Width: 776
+GlyphClass: 1
+Flags: W
+TtInstrs:
+NPUSHB
+ 51
+ 69
+ 43
+ 1
+ 42
+ 39
+ 35
+ 28
+ 32
+ 35
+ 19
+ 16
+ 10
+ 4
+ 47
+ 7
+ 1
+ 7
+ 0
+ 113
+ 10
+ 23
+ 113
+ 55
+ 35
+ 71
+ 35
+ 2
+ 6
+ 35
+ 22
+ 35
+ 38
+ 35
+ 3
+ 35
+ 45
+ 4
+ 28
+ 41
+ 16
+ 19
+ 56
+ 38
+ 72
+ 38
+ 88
+ 38
+ 3
+ 38
+ 41
+ 3
+SVTCA[y-axis]
+MIAP[rnd]
+RTHG
+MDRP[min,rnd,grey]
+DELTAP1
+RTG
+MDRP[rp0,rnd,grey]
+RTHG
+MDRP[min,rnd,black]
+RTG
+SRP0
+MDRP[rp0,min,rnd,black]
+MDRP[rnd,grey]
+SVTCA[x-axis]
+SRP0
+MDRP[rp0,rnd,grey]
+DELTAP1
+DELTAP1
+MIRP[min,rnd,black]
+MDRP[rp0,min,rnd,grey]
+MIRP[min,rnd,black]
+MDRP[rp0,rnd,white]
+DELTAP1
+RTHG
+MDRP[min,rnd,grey]
+RTG
+SRP0
+MDRP[rp0,min,rnd,grey]
+RTHG
+MDRP[min,rnd,black]
+RTG
+SRP0
+MDRP[rp0,rnd,grey]
+RTHG
+MDRP[min,rnd,grey]
+RTG
+SRP0
+MDRP[rp0,min,rnd,grey]
+RTHG
+MDRP[min,rnd,black]
+IUP[x]
+IUP[y]
+DELTAP1
+EndTTInstrs
+LayerCount: 2
+Fore
+SplineSet
+705 1205 m 0,0,1
+ 705 991 705 991 541 819 c 0,2,3
+ 527 805 527 805 519 805 c 0,4,5
+ 516 805 516 805 477 841 c 128,-1,6
+ 438 877 438 877 438 882 c 1,7,8
+ 438 871 438 871 484 954 c 128,-1,9
+ 530 1037 530 1037 530 1112 c 0,10,11
+ 530 1175 530 1175 501 1226 c 0,12,13
+ 483 1257 483 1257 445 1292 c 0,14,15
+ 416 1320 416 1320 416 1329 c 0,16,17
+ 416 1340 416 1340 485 1404.5 c 128,-1,18
+ 554 1469 554 1469 560 1469 c 0,19,20
+ 587 1469 587 1469 666 1358 c 0,21,22
+ 705 1302 705 1302 705 1205 c 0,0,1
+351 1148 m 0,23,24
+ 351 1055 351 1055 307 952.5 c 128,-1,25
+ 263 850 263 850 197 782 c 0,26,27
+ 181 767 181 767 173 767 c 0,28,29
+ 168 767 168 767 162 774 c 0,30,31
+ 89 856 89 856 89 850 c 0,32,33
+ 89 840 89 840 132.5 918 c 128,-1,34
+ 176 996 176 996 176 1059 c 0,35,36
+ 176 1140 176 1140 117 1206.5 c 128,-1,37
+ 58 1273 58 1273 58 1272 c 1,38,39
+ 58 1284 58 1284 127 1348.5 c 128,-1,40
+ 196 1413 196 1413 207 1413 c 0,41,42
+ 215 1413 215 1413 229 1399 c 0,43,44
+ 351 1276 351 1276 351 1148 c 0,23,24
+EndSplineSet
+EndChar

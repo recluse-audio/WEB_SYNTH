@@ -1,0 +1,28 @@
+StartChar: Oacute
+Encoding: 211 211 149
+Width: 1485
+GlyphClass: 1
+Flags: W
+TtInstrs:
+NPUSHB
+ 11
+ 2
+ 12
+ 36
+ 79
+ 2
+ 0
+ 40
+ 46
+ 8
+ 0
+ 80
+CALL
+SHC[rp2]
+CALL
+EndTTInstrs
+LayerCount: 2
+Fore
+Refer: 50 79 N 1 0 0 1 0 0 3
+Refer: 118 180 N 1 0 0 1 475 356 2
+EndChar

@@ -1,0 +1,22 @@
+StartChar: Lslash
+Encoding: 321 321 195
+Width: 1059
+GlyphClass: 1
+Flags: W
+TtInstrs:
+PUSHB_7
+ 1
+ 0
+ 56
+ 49
+ 15
+ 31
+ 80
+CALL
+SHC[rp2]
+EndTTInstrs
+LayerCount: 2
+Fore
+Refer: 47 76 N 1 0 0 1 0 0 3
+Refer: 251 -1 N 1 0 0 1 0 0 2
+EndChar
